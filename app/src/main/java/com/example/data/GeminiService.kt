@@ -136,9 +136,23 @@ object GeminiExpenseParser {
             val response = RetrofitClient.service.generateContent(apiKey, request)
             val jsonText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
             if (jsonText != null) {
-                // Parse JSON using Moshi
+                // Strip out markdown code blocks if the model wrapped the JSON
+                var cleanedJson = jsonText.trim()
+                if (cleanedJson.startsWith("```")) {
+                    cleanedJson = cleanedJson.removePrefix("```")
+                    if (cleanedJson.startsWith("json", ignoreCase = true)) {
+                        cleanedJson = cleanedJson.removePrefix("json")
+                    }
+                    cleanedJson = cleanedJson.trim()
+                }
+                if (cleanedJson.endsWith("```")) {
+                    cleanedJson = cleanedJson.removeSuffix("```")
+                    cleanedJson = cleanedJson.trim()
+                }
+
+                // Parse cleaned JSON using Moshi
                 val adapter = RetrofitClient.moshi.adapter(ParsedTransaction::class.java)
-                adapter.fromJson(jsonText)
+                adapter.fromJson(cleanedJson)
             } else {
                 null
             }

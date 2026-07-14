@@ -9,6 +9,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -25,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -1342,42 +1346,66 @@ fun GeminiDraftConfirmDialog(
                         Text(if (draft.paymentType == "CASH") "מזומן" else "אשראי", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF191C1E))
                     }
 
-                    // Category Selection with Dropdown
-                    Column {
+                    // Category Selection Grid
+                    Column(modifier = Modifier.fillMaxWidth()) {
                         Text("קטגוריה:", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF44474E), fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         
-                        ExposedDropdownMenuBox(
-                            expanded = dropdownExpanded,
-                            onExpandedChange = { dropdownExpanded = it }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 140.dp)
+                                .border(1.dp, Color(0xFFE1E2EC), RoundedCornerShape(12.dp))
+                                .background(Color(0xFFF8F9FF), RoundedCornerShape(12.dp))
+                                .padding(6.dp)
                         ) {
-                            OutlinedTextField(
-                                value = selectedCategory,
-                                onValueChange = {},
-                                readOnly = true,
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor()
-                                    .testTag("draft_category_field"),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF001D36),
-                                    unfocusedBorderColor = Color(0xFFC4C6D0)
-                                )
-                            )
-                            ExposedDropdownMenu(
-                                expanded = dropdownExpanded,
-                                onDismissRequest = { dropdownExpanded = false }
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                availableCategories.forEach { category ->
-                                    DropdownMenuItem(
-                                        text = { Text(category.name) },
-                                        onClick = {
-                                            selectedCategory = category.name
-                                            dropdownExpanded = false
+                                items(availableCategories) { category ->
+                                    val isSelected = category.name == selectedCategory
+                                    val emoji = when (category.name) {
+                                        "אוכל מוכן" -> "🥘"
+                                        "אוכל קנוי בברכל" -> "🛒"
+                                        "סלולר" -> "📱"
+                                        "ביגוד" -> "👔"
+                                        "מגורים" -> "🏠"
+                                        "בריאות" -> "💊"
+                                        "תחבורה" -> "🚗"
+                                        else -> "💰"
+                                    }
+                                    val backgroundColor = if (isSelected) Color(0xFF001D36) else Color.White
+                                    val contentColor = if (isSelected) Color.White else Color(0xFF001D36)
+                                    
+                                    Card(
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { selectedCategory = category.name },
+                                        border = if (isSelected) null else BorderStroke(1.dp, Color(0xFFE1E2EC))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                                                .fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Text(text = emoji, fontSize = 12.sp)
+                                            Text(
+                                                text = category.name,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                color = contentColor,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
                                         }
-                                    )
+                                    }
                                 }
                             }
                         }
@@ -1554,42 +1582,66 @@ fun ManualAddTransactionDialog(
                     }
                 }
 
-                // Category selection dropdown
-                Column {
+                // Category Selection Grid
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text("בחר קטגוריה:", fontWeight = FontWeight.SemiBold, color = Color(0xFF001D36))
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     
-                    ExposedDropdownMenuBox(
-                        expanded = categoryDropdownExpanded,
-                        onExpandedChange = { categoryDropdownExpanded = it }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 140.dp)
+                            .border(1.dp, Color(0xFFE1E2EC), RoundedCornerShape(12.dp))
+                            .background(Color(0xFFF8F9FF), RoundedCornerShape(12.dp))
+                            .padding(6.dp)
                     ) {
-                        OutlinedTextField(
-                            value = selectedCategoryName,
-                            onValueChange = {},
-                            readOnly = true,
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor()
-                                .testTag("manual_category_dropdown"),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF001D36),
-                                unfocusedBorderColor = Color(0xFFC4C6D0)
-                            )
-                        )
-                        ExposedDropdownMenu(
-                            expanded = categoryDropdownExpanded,
-                            onDismissRequest = { categoryDropdownExpanded = false }
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            categories.forEach { category ->
-                                DropdownMenuItem(
-                                    text = { Text(category.name) },
-                                    onClick = {
-                                        selectedCategoryName = category.name
-                                        categoryDropdownExpanded = false
+                            items(categories) { category ->
+                                val isSelected = category.name == selectedCategoryName
+                                val emoji = when (category.name) {
+                                    "אוכל מוכן" -> "🥘"
+                                    "אוכל קנוי בברכל" -> "🛒"
+                                    "סלולר" -> "📱"
+                                    "ביגוד" -> "👔"
+                                    "מגורים" -> "🏠"
+                                    "בריאות" -> "💊"
+                                    "תחבורה" -> "🚗"
+                                    else -> "💰"
+                                }
+                                val backgroundColor = if (isSelected) Color(0xFF001D36) else Color.White
+                                val contentColor = if (isSelected) Color.White else Color(0xFF001D36)
+                                
+                                Card(
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = CardDefaults.cardColors(containerColor = backgroundColor),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { selectedCategoryName = category.name },
+                                    border = if (isSelected) null else BorderStroke(1.dp, Color(0xFFE1E2EC))
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                                            .fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(text = emoji, fontSize = 12.sp)
+                                        Text(
+                                            text = category.name,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = contentColor,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
                                     }
-                                )
+                                }
                             }
                         }
                     }
@@ -1875,7 +1927,7 @@ fun EditCategoryBudgetDialog(
 
                     Button(
                         onClick = {
-                            val limit = budgetValue.toDoubleOrNull()
+                            val limit = if (budgetValue.isBlank()) 0.0 else budgetValue.toDoubleOrNull()
                             if (limit != null && limit >= 0.0) {
                                 onSave(limit)
                             } else {
