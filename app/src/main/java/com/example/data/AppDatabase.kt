@@ -143,6 +143,7 @@ class BudgetRepository(private val db: AppDatabase) {
             CategoryEntity(name = "מגורים", isSystem = true),
             CategoryEntity(name = "בריאות", isSystem = true),
             CategoryEntity(name = "תחבורה", isSystem = true),
+            CategoryEntity(name = "הכנסות", isSystem = true),
             CategoryEntity(name = "אחר", isSystem = true)
         )
         for (category in defaultCategories) {

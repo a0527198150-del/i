@@ -520,6 +520,56 @@ fun BudgetDashboardCard(
                 modifier = Modifier.padding(vertical = 4.dp)
             )
 
+            // Total Income / Expense side-by-side
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Total Income Column
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color(0xFFE8F5E9).copy(alpha = 0.7f), RoundedCornerShape(16.dp))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = "סה\"כ הכנסות 📈",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2E7D32)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "₪${decFormat.format(stats.totalIncome)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1B5E20)
+                    )
+                }
+
+                // Total Expense Column
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color(0xFFFFEBEE).copy(alpha = 0.7f), RoundedCornerShape(16.dp))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = "סה\"כ הוצאות 📉",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFC62828)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "₪${decFormat.format(stats.totalExpense)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFB71C1C)
+                    )
+                }
+            }
+
             HorizontalDivider(color = Color(0xFF001D36).copy(alpha = 0.1f))
 
             // Income / Expense summary split
@@ -723,6 +773,7 @@ fun TransactionItemRow(
         "מגורים" -> Pair("🏠", Color(0xFFE0F2F1))
         "בריאות" -> Pair("💊", Color(0xFFFFCDD2))
         "תחבורה" -> Pair("🚗", Color(0xFFFFF9C4))
+        "הכנסות" -> Pair("📈", Color(0xFFC8E6C9))
         else -> Pair("💰", Color(0xFFE8EAF6))
     }
 
@@ -821,6 +872,7 @@ fun CategoryGroupCard(
         "מגורים" -> "🏠"
         "בריאות" -> "💊"
         "תחבורה" -> "🚗"
+        "הכנסות" -> "📈"
         else -> "💰"
     }
 
@@ -1375,6 +1427,7 @@ fun GeminiDraftConfirmDialog(
                                         "מגורים" -> "🏠"
                                         "בריאות" -> "💊"
                                         "תחבורה" -> "🚗"
+                                        "הכנסות" -> "📈"
                                         else -> "💰"
                                     }
                                     val backgroundColor = if (isSelected) Color(0xFF001D36) else Color.White
@@ -1498,7 +1551,12 @@ fun ManualAddTransactionDialog(
                                 color = if (isExpense) Color.White else Color.Transparent,
                                 shape = RoundedCornerShape(50)
                             )
-                            .clickable { isExpense = true },
+                            .clickable {
+                                isExpense = true
+                                if (selectedCategoryName == "הכנסות") {
+                                    selectedCategoryName = categories.firstOrNull { it.name != "הכנסות" }?.name ?: "אחר"
+                                }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -1516,7 +1574,12 @@ fun ManualAddTransactionDialog(
                                 color = if (!isExpense) Color.White else Color.Transparent,
                                 shape = RoundedCornerShape(50)
                             )
-                            .clickable { isExpense = false },
+                            .clickable {
+                                isExpense = false
+                                if (categories.any { it.name == "הכנסות" }) {
+                                    selectedCategoryName = "הכנסות"
+                                }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -1611,6 +1674,7 @@ fun ManualAddTransactionDialog(
                                     "מגורים" -> "🏠"
                                     "בריאות" -> "💊"
                                     "תחבורה" -> "🚗"
+                                    "הכנסות" -> "📈"
                                     else -> "💰"
                                 }
                                 val backgroundColor = if (isSelected) Color(0xFF001D36) else Color.White
@@ -1775,6 +1839,7 @@ fun CategoryManagerDialog(
                             "מגורים" -> "🏠"
                             "בריאות" -> "💊"
                             "תחבורה" -> "🚗"
+                            "הכנסות" -> "📈"
                             else -> "💰"
                         }
 

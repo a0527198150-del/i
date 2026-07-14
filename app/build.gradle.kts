@@ -1,5 +1,14 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
 
+// Automatically generate .env from environment variables if present
+val envFile = rootProject.file(".env")
+val geminiEnvKey = System.getenv("GEMINI_API_KEY") ?: ""
+if (geminiEnvKey.isNotEmpty()) {
+    envFile.writeText("GEMINI_API_KEY=$geminiEnvKey\n")
+} else if (!envFile.exists() && rootProject.file(".env.example").exists()) {
+    rootProject.file(".env.example").copyTo(envFile, overwrite = true)
+}
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
