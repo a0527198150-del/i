@@ -23,4 +23,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build with Gradle
+<<<<<<< HEAD
         run: gradle build
+=======
+        run: gradle build
+>>>>>>> 8e78f65bb248c56aed744586e79827b9cd28706f

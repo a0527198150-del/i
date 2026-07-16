@@ -1,18 +1,14 @@
 pluginManagement {
   repositories {
-    google {
-      content {
-        includeGroupByRegex("com\\.android.*")
-        includeGroupByRegex("com\\.google.*")
-        includeGroupByRegex("androidx.*")
-      }
-    }
+    maven { url = uri("https://dl.google.com/dl/android/maven2/") }
     mavenCentral()
     gradlePluginPortal()
   }
 }
 
-plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" }
+plugins {
+  id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
 
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -23,5 +19,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Hebrew Budget"
-
 include(":app")
