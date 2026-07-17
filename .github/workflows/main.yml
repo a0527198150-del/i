@@ -19,10 +19,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Create keystore from secret
+        run: |
+          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > my-upload-key.jks
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
 
-      - name: Build with Gradle
+      - name: Build with Gradle (Release)
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: gradle assembleRelease --no-daemon --stacktrace
