@@ -30,3 +30,9 @@ jobs:
 
       - name: Build with Gradle (Debug)
         run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
