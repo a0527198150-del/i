@@ -25,4 +25,4 @@ jobs:
           gradle-version: '9.3.1'
 
       - name: Build with Gradle
-        run: gradle build --no-daemon --stacktrace -x kspDebugKotlin -x kspReleaseKotlin
+        run: gradle assembleRelease --no-daemon --stacktrace
