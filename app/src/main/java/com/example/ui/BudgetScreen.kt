@@ -2173,4 +2173,356 @@ fun EditMonthlyBudgetDialog(
                                 isError = true
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Co
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                    ) {
+                        Text("שמור תקציב", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DonutChartCard(
+    categories: List<CategoryEntity>,
+    transactions: List<TransactionEntity>,
+    modifier: Modifier = Modifier
+) {
+    val decFormat = remember { DecimalFormat("#,##0.00") }
+    val expenseTransactions = transactions.filter { it.isExpense }
+    val totalExpense = expenseTransactions.sumOf { it.amount }
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "פילוח הוצאות לפי קטגוריות",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF001D36)
+            )
+            
+            if (totalExpense == 0.0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.PieChart,
+                            contentDescription = null,
+                            tint = Color(0xFFC4C6D0),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Text(
+                            text = "אין הוצאות מתועדות לחודש זה.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF44474E)
+                        )
+                    }
+                }
+            } else {
+                val categoryTotals = expenseTransactions
+                    .groupBy { it.categoryName }
+                    .mapValues { it.value.sumOf { tx -> tx.amount } }
+                    .toList()
+                    .sortedByDescending { it.second }
+                
+                val chartColors = listOf(
+                    Color(0xFF006494), // Deep Blue
+                    Color(0xFF00A699), // Teal
+                    Color(0xFF2E7D32), // Forest Green
+                    Color(0xFFF2A900), // Amber
+                    Color(0xFFD32F2F), // Red
+                    Color(0xFF8E24AA), // Purple
+                    Color(0xFFE65100), // Dark Orange
+                    Color(0xFF0288D1), // Sky Blue
+                    Color(0xFF3949AB)  // Indigo
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Donut Chart Canvas
+                    Box(
+                        modifier = Modifier
+                            .size(160.dp)
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.foundation.Canvas(modifier = Modifier.size(140.dp)) {
+                            var startAngle = -90f
+                            categoryTotals.forEachIndexed { index, (_, amt) ->
+                                val sweepAngle = (amt / totalExpense * 360.0).toFloat()
+                                drawArc(
+                                    color = chartColors[index % chartColors.size],
+                                    startAngle = startAngle,
+                                    sweepAngle = sweepAngle,
+                                    useCenter = false,
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                        width = 24.dp.toPx(),
+                                        cap = androidx.compose.ui.graphics.StrokeCap.Round
+                                    )
+                                )
+                                startAngle += sweepAngle
+                            }
+                        }
+                        
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "סה\"כ הוצאות",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF44474E),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "₪${decFormat.format(totalExpense)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF001D36)
+                            )
+                        }
+                    }
+                    
+                    // Legend Column
+                    Column(
+                        modifier = Modifier.weight(1.2f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        categoryTotals.take(5).forEachIndexed { index, (name, amt) ->
+                            val pct = (amt / totalExpense * 100).toInt()
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(chartColors[index % chartColors.size], RoundedCornerShape(2.dp))
+                                )
+                                Column {
+                                    Text(
+                                        text = "$name ($pct%)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF191C1E)
+                                    )
+                                    Text(
+                                        text = "₪${decFormat.format(amt)}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF44474E)
+                                    )
+                                }
+                            }
+                        }
+                        if (categoryTotals.size > 5) {
+                            val otherSum = categoryTotals.drop(5).sumOf { it.second }
+                            val otherPct = (otherSum / totalExpense * 100).toInt()
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(Color.Gray, RoundedCornerShape(2.dp))
+                                )
+                                Column {
+                                    Text(
+                                        text = "אחר ($otherPct%)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF191C1E)
+                                    )
+                                    Text(
+                                        text = "₪${decFormat.format(otherSum)}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF44474E)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BarChartCard(
+    allTransactions: List<TransactionEntity>,
+    modifier: Modifier = Modifier
+) {
+    val decFormat = remember { DecimalFormat("#,##0") }
+    
+    val monthlyData = remember(allTransactions) {
+        // Group transactions by year and month
+        allTransactions.groupBy { "${it.hebrewYear}_${it.hebrewMonthIndex}" }
+            .map { (key, txs) ->
+                val firstTx = txs.first()
+                val income = txs.filter { !it.isExpense }.sumOf { it.amount }
+                val expense = txs.filter { it.isExpense }.sumOf { it.amount }
+                
+                MonthSummary(
+                    year = firstTx.hebrewYear,
+                    yearString = firstTx.hebrewYearString,
+                    monthIndex = firstTx.hebrewMonthIndex,
+                    monthName = firstTx.hebrewMonthName,
+                    income = income,
+                    expense = expense
+                )
+            }
+            .sortedWith(compareBy<MonthSummary> { it.year }.thenBy { it.monthIndex })
+            .takeLast(5) // Show last 5 months
+    }
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "השוואת הכנסות מול הוצאות לאורך זמן",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF001D36)
+            )
+            
+            if (monthlyData.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.BarChart,
+                            contentDescription = null,
+                            tint = Color(0xFFC4C6D0),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Text(
+                            text = "אין מספיק נתונים להשוואה חודשית.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF44474E)
+                        )
+                    }
+                }
+            } else {
+                val maxAmount = monthlyData.maxOfOrNull { maxOf(it.income, it.expense) } ?: 1.0
+                
+                // Legend
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(Color(0xFF2E7D32), RoundedCornerShape(3.dp))
+                        )
+                        Text("הכנסות", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF191C1E))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(Color(0xFFBA1A1A), RoundedCornerShape(3.dp))
+                        )
+                        Text("הוצאות", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF191C1E))
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Chart layout
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    monthlyData.forEach { month ->
+                        val incomeHeightFraction = (month.income / maxAmount).toFloat().coerceIn(0.01f, 1.0f)
+                        val expenseHeightFraction = (month.expense / maxAmount).toFloat().coerceIn(0.01f, 1.0f)
+                        
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Bottom,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.Bottom,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                // Income Bar
+                                Box(
+                                    modifier = Modifier
+                                        .width(18.dp)
+                                        .fillMaxHeight(incomeHeightFraction)
+                                        .background(Color(0xFF2E7D32), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                )
+                                // Expense Bar
+                                Box(
+                                    modifier = Modifier
+                                        .width(18.dp)
+                                        .fillMaxHeight(expenseHeightFraction)
+                                        .background(Color(0xFFBA1A1A), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Text(
+                                text = month.monthName,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF001D36),
+                                maxLines = 1
+                            )
+                            Text(
+                                text = month.yearString,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF44474E),
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+data class MonthSummary(
+    val year: Int,
+    val yearString: String,
+    val monthIndex: Int,
+    val monthName: String,
+    val income: Double,
+    val expense: Double
+)
