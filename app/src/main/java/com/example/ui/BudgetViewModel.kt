@@ -19,6 +19,13 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     private val database = AppDatabase.getDatabase(application)
     private val repository = BudgetRepository(database)
 
+    // Preferences store for app-wide settings that aren't per-category (e.g. overall monthly budget cap)
+    private val appPrefs = application.getSharedPreferences("hebrew_budget_prefs", Context.MODE_PRIVATE)
+
+    // Overall monthly budget cap (0.0 means no cap is defined), independent of per-category limits
+    private val _monthlyBudgetLimit = MutableStateFlow(appPrefs.getFloat(KEY_MONTHLY_BUDGET_LIMIT, 0f).toDouble())
+    val monthlyBudgetLimit = _monthlyBudgetLimit.asStateFlow()
+
     // Exposed lists
     val categories: StateFlow<List<CategoryEntity>> = repository.allCategories
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -159,6 +166,13 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // Update the overall monthly budget cap (applies across all categories combined)
+    fun setMonthlyBudgetLimit(limit: Double) {
+        val safeLimit = if (limit < 0.0) 0.0 else limit
+        _monthlyBudgetLimit.value = safeLimit
+        appPrefs.edit().putFloat(KEY_MONTHLY_BUDGET_LIMIT, safeLimit.toFloat()).apply()
+    }
+
     // Insert transaction
     fun addManualTransaction(
         title: String,
@@ -193,6 +207,29 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                         sendLocalNotification(
                             "חריגה מהתקציב!",
                             "ההוצאות בקטגוריה '$categoryName' עברו את התקציב שהוגדר! (₪${String.format("%.2f", newTotal)} מתוך ₪${String.format("%.2f", limit)})"
+                        )
+                    }
+                }
+
+                // Check overall monthly budget cap (across all categories combined)
+                val overallLimit = _monthlyBudgetLimit.value
+                if (overallLimit > 0.0) {
+                    val currentMonthTotal = allTransactions.value
+                        .filter { it.isExpense && it.hebrewMonthIndex == hebrewInfo.monthIndex && it.hebrewYear == hebrewInfo.year }
+                        .sumOf { it.amount }
+                    val newMonthTotal = currentMonthTotal + amount
+                    val pBeforeOverall = currentMonthTotal / overallLimit
+                    val pAfterOverall = newMonthTotal / overallLimit
+
+                    if (pBeforeOverall < 0.8 && pAfterOverall >= 0.8 && pAfterOverall < 1.0) {
+                        sendLocalNotification(
+                            "התראת תקציב חודשי כולל - 80%",
+                            "סך כל ההוצאות החודש הגיעו ל-80% מהתקציב הכולל (₪${String.format("%.2f", newMonthTotal)} מתוך ₪${String.format("%.2f", overallLimit)})"
+                        )
+                    } else if (pBeforeOverall < 1.0 && pAfterOverall >= 1.0) {
+                        sendLocalNotification(
+                            "חריגה מהתקציב החודשי הכולל!",
+                            "סך כל ההוצאות החודש עברו את התקציב הכולל שהוגדר! (₪${String.format("%.2f", newMonthTotal)} מתוך ₪${String.format("%.2f", overallLimit)})"
                         )
                     }
                 }
@@ -300,6 +337,10 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     fun clearDraft() {
         _parsedDraft.value = null
         _parseError.value = null
+    }
+
+    companion object {
+        private const val KEY_MONTHLY_BUDGET_LIMIT = "monthly_budget_limit"
     }
 }
 
