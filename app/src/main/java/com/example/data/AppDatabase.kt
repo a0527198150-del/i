@@ -2,6 +2,8 @@ package com.example.data
 
 import android.content.Context
 import androidx.room.*
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 // --- Room Entities ---
@@ -32,6 +34,19 @@ data class TransactionEntity(
     val hebrewYear: Int,
     val hebrewYearString: String,
     val rawText: String? = null
+)
+
+@Entity(tableName = "recurring_rules")
+data class RecurringRuleEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val title: String,
+    val amount: Double,
+    val isExpense: Boolean,
+    val categoryName: String,
+    val paymentType: String, // "CASH" or "CREDIT"
+    val dayOfMonth: Int, // Gregorian day of month (1-28) on which the transaction is generated
+    val isActive: Boolean = true,
+    val lastGeneratedPeriodKey: String? = null // "yyyy-MM" of the last calendar month this rule generated a transaction for
 )
 
 // --- DAOs (Data Access Objects) ---
@@ -72,12 +87,48 @@ interface TransactionDao {
     suspend fun deleteTransactionById(id: Int)
 }
 
+@Dao
+interface RecurringRuleDao {
+    @Query("SELECT * FROM recurring_rules ORDER BY id ASC")
+    fun getAllRecurringRules(): Flow<List<RecurringRuleEntity>>
+
+    @Insert
+    suspend fun insertRecurringRule(rule: RecurringRuleEntity): Long
+
+    @Update
+    suspend fun updateRecurringRule(rule: RecurringRuleEntity)
+
+    @Delete
+    suspend fun deleteRecurringRule(rule: RecurringRuleEntity)
+}
+
 // --- Room Database ---
 
-@Database(entities = [CategoryEntity::class, TransactionEntity::class], version = 2, exportSchema = false)
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `recurring_rules` (
+                `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                `title` TEXT NOT NULL,
+                `amount` REAL NOT NULL,
+                `isExpense` INTEGER NOT NULL,
+                `categoryName` TEXT NOT NULL,
+                `paymentType` TEXT NOT NULL,
+                `dayOfMonth` INTEGER NOT NULL,
+                `isActive` INTEGER NOT NULL,
+                `lastGeneratedPeriodKey` TEXT
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+@Database(entities = [CategoryEntity::class, TransactionEntity::class, RecurringRuleEntity::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun transactionDao(): TransactionDao
+    abstract fun recurringRuleDao(): RecurringRuleDao
 
     companion object {
         @Volatile
@@ -90,6 +141,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "hebrew_budget_db"
                 )
+                .addMigrations(MIGRATION_2_3)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
@@ -104,6 +156,19 @@ abstract class AppDatabase : RoomDatabase() {
 class BudgetRepository(private val db: AppDatabase) {
     val allCategories: Flow<List<CategoryEntity>> = db.categoryDao().getAllCategories()
     val allTransactions: Flow<List<TransactionEntity>> = db.transactionDao().getAllTransactions()
+    val allRecurringRules: Flow<List<RecurringRuleEntity>> = db.recurringRuleDao().getAllRecurringRules()
+
+    suspend fun insertRecurringRule(rule: RecurringRuleEntity) {
+        db.recurringRuleDao().insertRecurringRule(rule)
+    }
+
+    suspend fun updateRecurringRule(rule: RecurringRuleEntity) {
+        db.recurringRuleDao().updateRecurringRule(rule)
+    }
+
+    suspend fun deleteRecurringRule(rule: RecurringRuleEntity) {
+        db.recurringRuleDao().deleteRecurringRule(rule)
+    }
 
     fun getTransactionsForHebrewMonth(year: Int, monthIndex: Int): Flow<List<TransactionEntity>> {
         return db.transactionDao().getTransactionsForHebrewMonth(year, monthIndex)
