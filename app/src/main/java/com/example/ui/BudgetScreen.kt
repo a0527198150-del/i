@@ -2141,4 +2141,969 @@ fun EditCategoryBudgetDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
                 ) {
-                    TextBut
+                                   ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                    ) {
+                        Text("ביטול", fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            val limit = if (budgetValue.isBlank()) 0.0 else budgetValue.toDoubleOrNull()
+                            if (limit != null && limit >= 0.0) {
+                                onSave(limit)
+                            } else {
+                                isError = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                    ) {
+                        Text("שמור תקציב", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EditMonthlyBudgetDialog(
+    currentLimit: Double,
+    onDismiss: () -> Unit,
+    onSave: (Double) -> Unit
+) {
+    var budgetValue by remember { mutableStateOf(if (currentLimit > 0.0) currentLimit.toString() else "") }
+    var isError by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "תקציב חודשי כולל",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF001D36)
+                )
+
+                Text(
+                    text = "גג הוצאה כולל לחודש, על כל הקטגוריות יחד. השאר ריק כדי לבטל את התקרה.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF44474E)
+                )
+
+                OutlinedTextField(
+                    value = budgetValue,
+                    onValueChange = {
+                        budgetValue = it
+                        isError = false
+                    },
+                    label = { Text("סכום תקציב חודשי כולל (₪)") },
+                    placeholder = { Text("לדוגמה: 5000") },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    singleLine = true,
+                    isError = isError,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF006494),
+                        focusedLabelColor = Color(0xFF006494)
+                    )
+                )
+
+                if (isError) {
+                    Text(
+                        text = "אנא הזן סכום תקין וגדול או שווה ל-0",
+                        color = Color(0xFFBA1A1A),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                    ) {
+                        Text("ביטול", fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            val limit = if (budgetValue.isBlank()) 0.0 else budgetValue.toDoubleOrNull()
+                            if (limit != null && limit >= 0.0) {
+                                onSave(limit)
+                            } else {
+                                isError = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                    ) {
+                        Text("שמור תקציב", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CalendarModeDialog(
+    currentMode: CalendarMode,
+    currentStartDay: Int,
+    onDismiss: () -> Unit,
+    onSave: (CalendarMode, Int) -> Unit
+) {
+    var selectedMode by remember { mutableStateOf(currentMode) }
+    var startDayText by remember { mutableStateOf(currentStartDay.toString()) }
+    var isError by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "מצב תצוגת חודש",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF001D36)
+                )
+                Text(
+                    text = "בחר האם התצוגה והחישובים (יתרה, תקציב, קטגוריות) יתבססו על החודש העברי או על מחזור חודש לועזי (שימושי בשביל התאמה למחזור חיוב האשראי).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF44474E)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFEEF0F8), RoundedCornerShape(50))
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                            .background(if (selectedMode == CalendarMode.HEBREW) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .clickable { selectedMode = CalendarMode.HEBREW },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("חודש עברי", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                            .background(if (selectedMode == CalendarMode.GREGORIAN) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .clickable { selectedMode = CalendarMode.GREGORIAN },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("חודש לועזי", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                    }
+                }
+
+                if (selectedMode == CalendarMode.GREGORIAN) {
+                    OutlinedTextField(
+                        value = startDayText,
+                        onValueChange = { startDayText = it; isError = false },
+                        label = { Text("יום תחילת המחזור בחודש (1-28)") },
+                        placeholder = { Text("לדוגמה: 10") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                        singleLine = true,
+                        isError = isError,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF006494),
+                            focusedLabelColor = Color(0xFF006494)
+                        )
+                    )
+                    Text(
+                        text = "ימים לפני התאריך הזה בכל חודש ייחשבו כשייכים לחודש הקודם - למשל אם החיוב מתחיל ב-10, אז ה-1 עד ה-9 בחודש שייכים למחזור של החודש הקודם.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF44474E)
+                    )
+                    if (isError) {
+                        Text(
+                            text = "אנא הזן מספר בין 1 ל-28",
+                            color = Color(0xFFBA1A1A),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                    ) {
+                        Text("ביטול", fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            if (selectedMode == CalendarMode.HEBREW) {
+                                onSave(CalendarMode.HEBREW, currentStartDay)
+                            } else {
+                                val day = startDayText.toIntOrNull()
+                                if (day != null && day in 1..28) {
+                                    onSave(CalendarMode.GREGORIAN, day)
+                                } else {
+                                    isError = true
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                    ) {
+                        Text("שמור", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RecurringRuleManagerDialog(
+    rules: List<RecurringRuleEntity>,
+    categories: List<CategoryEntity>,
+    onDismiss: () -> Unit,
+    onAdd: (title: String, amount: Double, isExpense: Boolean, categoryName: String, paymentType: String, dayOfMonth: Int) -> Unit,
+    onToggleActive: (RecurringRuleEntity, Boolean) -> Unit,
+    onDelete: (RecurringRuleEntity) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var amountStr by remember { mutableStateOf("") }
+    var dayStr by remember { mutableStateOf("1") }
+    var isExpense by remember { mutableStateOf(true) }
+    var paymentType by remember { mutableStateOf("CREDIT") }
+    var selectedCategoryName by remember { mutableStateOf(categories.firstOrNull()?.name ?: "אחר") }
+    var showAddForm by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, Color(0xFFE1E2EC)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .heightIn(max = 640.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text(
+                    text = "הכנסות/הוצאות קבועות",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF001D36)
+                )
+                Text(
+                    text = "רשומות שנוצרות אוטומטית כל חודש קלנדרי, בתאריך שתבחר.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF44474E)
+                )
+                HorizontalDivider(color = Color(0xFFE1E2EC))
+
+                if (rules.isEmpty()) {
+                    Text(
+                        text = "אין עדיין רשומות קבועות",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF44474E)
+                    )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        rules.forEach { rule ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        if (rule.isExpense) Color(0xFFFFEBEE) else Color(0xFFE8F5E9),
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(rule.title, fontWeight = FontWeight.Bold, color = Color(0xFF001D36))
+                                    Text(
+                                        text = "${rule.categoryName} • ₪${rule.amount} • כל ${rule.dayOfMonth} בחודש",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF44474E)
+                                    )
+                                }
+                                Switch(
+                                    checked = rule.isActive,
+                                    onCheckedChange = { onToggleActive(rule, it) }
+                                )
+                                IconButton(onClick = { onDelete(rule) }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "מחק", tint = Color(0xFFB71C1C))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = Color(0xFFE1E2EC))
+
+                if (!showAddForm) {
+                    Button(
+                        onClick = { showAddForm = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001D36))
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("הוסף רשומה קבועה", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("שם (למשל: משכורת / שכירות)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF006494),
+                            focusedLabelColor = Color(0xFF006494)
+                        )
+                    )
+                    OutlinedTextField(
+                        value = amountStr,
+                        onValueChange = { amountStr = it },
+                        label = { Text("סכום (₪)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF006494),
+                            focusedLabelColor = Color(0xFF006494)
+                        )
+                    )
+                    OutlinedTextField(
+                        value = dayStr,
+                        onValueChange = { dayStr = it },
+                        label = { Text("יום בחודש (1-28)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF006494),
+                            focusedLabelColor = Color(0xFF006494)
+                        )
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFEEF0F8), RoundedCornerShape(50))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(36.dp)
+                                .background(if (isExpense) Color.White else Color.Transparent, RoundedCornerShape(50))
+                                .clickable { isExpense = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "הוצאה קבועה",
+                                fontWeight = FontWeight.Bold,
+                                color = if (isExpense) Color(0xFFBA1A1A) else Color(0xFF44474E),
+                                fontSize = 13.sp
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(36.dp)
+                                .background(if (!isExpense) Color.White else Color.Transparent, RoundedCornerShape(50))
+                                .clickable { isExpense = false },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "הכנסה קבועה",
+                                fontWeight = FontWeight.Bold,
+                                color = if (!isExpense) Color(0xFF2E7D32) else Color(0xFF44474E),
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        FilterChip(
+                            selected = paymentType == "CREDIT",
+                            onClick = { paymentType = "CREDIT" },
+                            label = { Text("אשראי") }
+                        )
+                        FilterChip(
+                            selected = paymentType == "CASH",
+                            onClick = { paymentType = "CASH" },
+                            label = { Text("מזומן") }
+                        )
+                    }
+
+                    Text("קטגוריה:", fontWeight = FontWeight.SemiBold, color = Color(0xFF001D36))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 120.dp, max = 180.dp)
+                            .border(1.dp, Color(0xFFE1E2EC), RoundedCornerShape(12.dp))
+                            .background(Color(0xFFF8F9FF), RoundedCornerShape(12.dp))
+                            .padding(8.dp)
+                    ) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(categories) { category ->
+                                val isSelected = category.name == selectedCategoryName
+                                Card(
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF001D36) else Color.White),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp)
+                                        .clickable { selectedCategoryName = category.name },
+                                    border = if (isSelected) null else BorderStroke(1.dp, Color(0xFFE1E2EC))
+                                ) {
+                                    Box(
+                                        modifier = Modifier.padding(8.dp).fillMaxWidth(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = category.name,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (isSelected) Color.White else Color(0xFF001D36),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                    ) {
+                        TextButton(
+                            onClick = { showAddForm = false },
+                            colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                        ) {
+                            Text("ביטול", fontWeight = FontWeight.Bold)
+                        }
+                        Button(
+                            onClick = {
+                                val amt = amountStr.toDoubleOrNull()
+                                val day = dayStr.toIntOrNull()
+                                if (title.isNotBlank() && amt != null && amt > 0.0 && day != null && day in 1..28) {
+                                    onAdd(title, amt, isExpense, selectedCategoryName, paymentType, day)
+                                    title = ""
+                                    amountStr = ""
+                                    dayStr = "1"
+                                    showAddForm = false
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                        ) {
+                            Text("שמור", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                    ) {
+                        Text("סגור", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DonutChartCard(
+    categories: List<CategoryEntity>,
+    transactions: List<TransactionEntity>,
+    modifier: Modifier = Modifier
+) {
+    val decFormat = remember { DecimalFormat("#,##0.00") }
+    val expenseTransactions = transactions.filter { it.isExpense }
+    val totalExpense = expenseTransactions.sumOf { it.amount }
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "פילוח הוצאות לפי קטגוריות",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF001D36)
+            )
+            
+            if (totalExpense == 0.0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.PieChart,
+                            contentDescription = null,
+                            tint = Color(0xFFC4C6D0),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Text(
+                            text = "אין הוצאות מתועדות לחודש זה.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF44474E)
+                        )
+                    }
+                }
+            } else {
+                val categoryTotals = expenseTransactions
+                    .groupBy { it.categoryName }
+                    .mapValues { it.value.sumOf { tx -> tx.amount } }
+                    .toList()
+                    .sortedByDescending { it.second }
+                
+                val chartColors = listOf(
+                    Color(0xFF006494), // Deep Blue
+                    Color(0xFF00A699), // Teal
+                    Color(0xFF2E7D32), // Forest Green
+                    Color(0xFFF2A900), // Amber
+                    Color(0xFFD32F2F), // Red
+                    Color(0xFF8E24AA), // Purple
+                    Color(0xFFE65100), // Dark Orange
+                    Color(0xFF0288D1), // Sky Blue
+                    Color(0xFF3949AB)  // Indigo
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Donut Chart Canvas
+                    Box(
+                        modifier = Modifier
+                            .size(160.dp)
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.foundation.Canvas(modifier = Modifier.size(140.dp)) {
+                            var startAngle = -90f
+                            categoryTotals.forEachIndexed { index, (_, amt) ->
+                                val sweepAngle = (amt / totalExpense * 360.0).toFloat()
+                                drawArc(
+                                    color = chartColors[index % chartColors.size],
+                                    startAngle = startAngle,
+                                    sweepAngle = sweepAngle,
+                                    useCenter = false,
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                        width = 24.dp.toPx(),
+                                        cap = androidx.compose.ui.graphics.StrokeCap.Round
+                                    )
+                                )
+                                startAngle += sweepAngle
+                            }
+                        }
+                        
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "סה\"כ הוצאות",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF44474E),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "₪${decFormat.format(totalExpense)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF001D36)
+                            )
+                        }
+                    }
+                    
+                    // Legend Column
+                    Column(
+                        modifier = Modifier.weight(1.2f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        categoryTotals.take(5).forEachIndexed { index, (name, amt) ->
+                            val pct = (amt / totalExpense * 100).toInt()
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(chartColors[index % chartColors.size], RoundedCornerShape(2.dp))
+                                )
+                                Column {
+                                    Text(
+                                        text = "$name ($pct%)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF191C1E)
+                                    )
+                                    Text(
+                                        text = "₪${decFormat.format(amt)}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF44474E)
+                                    )
+                                }
+                            }
+                        }
+                        if (categoryTotals.size > 5) {
+                            val otherSum = categoryTotals.drop(5).sumOf { it.second }
+                            val otherPct = (otherSum / totalExpense * 100).toInt()
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(Color.Gray, RoundedCornerShape(2.dp))
+                                )
+                                Column {
+                                    Text(
+                                        text = "אחר ($otherPct%)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF191C1E)
+                                    )
+                                    Text(
+                                        text = "₪${decFormat.format(otherSum)}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF44474E)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CashCreditBreakdownCard(
+    stats: MonthlyStats,
+    modifier: Modifier = Modifier
+) {
+    val decFormat = remember { DecimalFormat("#,##0") }
+    val maxAmount = maxOf(stats.cashIncome, stats.cashExpense, stats.creditIncome, stats.creditExpense, 1.0)
+
+    data class BarRow(val label: String, val amount: Double, val color: Color)
+
+    val rows = listOf(
+        BarRow("הכנסות מזומן", stats.cashIncome, Color(0xFF2E7D32)),
+        BarRow("הוצאות מזומן", stats.cashExpense, Color(0xFFB71C1C)),
+        BarRow("הכנסות אשראי", stats.creditIncome, Color(0xFF1565C0)),
+        BarRow("הוצאות אשראי", stats.creditExpense, Color(0xFFEF6C00))
+    )
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "פירוט מזומן מול אשראי",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF001D36)
+            )
+
+            rows.forEach { row ->
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = row.label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF001D36)
+                        )
+                        Text(
+                            text = "₪${decFormat.format(row.amount)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = row.color
+                        )
+                    }
+                    LinearProgressIndicator(
+                        progress = { (row.amount / maxAmount).toFloat().coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(50)),
+                        color = row.color,
+                        trackColor = Color(0xFFF0F0F5)
+                    )
+                }
+            }
+
+            HorizontalDivider(color = Color(0xFFE1E2EC))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text("סה\"כ מזומן", style = MaterialTheme.typography.labelMedium, color = Color(0xFF44474E))
+                    Text(
+                        text = "₪${decFormat.format(stats.cashIncome - stats.cashExpense)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (stats.cashIncome - stats.cashExpense >= 0) Color(0xFF1B5E20) else Color(0xFFB71C1C)
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("סה\"כ אשראי", style = MaterialTheme.typography.labelMedium, color = Color(0xFF44474E))
+                    Text(
+                        text = "₪${decFormat.format(stats.creditIncome - stats.creditExpense)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (stats.creditIncome - stats.creditExpense >= 0) Color(0xFF1B5E20) else Color(0xFFB71C1C)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BarChartCard(
+    allTransactions: List<TransactionEntity>,
+    modifier: Modifier = Modifier
+) {
+    val decFormat = remember { DecimalFormat("#,##0") }
+    
+    val monthlyData = remember(allTransactions) {
+        // Group transactions by year and month
+        allTransactions.groupBy { "${it.hebrewYear}_${it.hebrewMonthIndex}" }
+            .map { (key, txs) ->
+                val firstTx = txs.first()
+                val income = txs.filter { !it.isExpense }.sumOf { it.amount }
+                val expense = txs.filter { it.isExpense }.sumOf { it.amount }
+                
+                MonthSummary(
+                    year = firstTx.hebrewYear,
+                    yearString = firstTx.hebrewYearString,
+                    monthIndex = firstTx.hebrewMonthIndex,
+                    monthName = firstTx.hebrewMonthName,
+                    income = income,
+                    expense = expense
+                )
+            }
+            .sortedWith(compareBy<MonthSummary> { it.year }.thenBy { it.monthIndex })
+            .takeLast(5) // Show last 5 months
+    }
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "השוואת הכנסות מול הוצאות לאורך זמן",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF001D36)
+            )
+            
+            if (monthlyData.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.BarChart,
+                            contentDescription = null,
+                            tint = Color(0xFFC4C6D0),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Text(
+                            text = "אין מספיק נתונים להשוואה חודשית.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF44474E)
+                        )
+                    }
+                }
+            } else {
+                val maxAmount = monthlyData.maxOfOrNull { maxOf(it.income, it.expense) } ?: 1.0
+                
+                // Legend
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(Color(0xFF2E7D32), RoundedCornerShape(3.dp))
+                        )
+                        Text("הכנסות", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF191C1E))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(Color(0xFFBA1A1A), RoundedCornerShape(3.dp))
+                        )
+                        Text("הוצאות", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF191C1E))
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Chart layout
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    monthlyData.forEach { month ->
+                        val incomeHeightFraction = (month.income / maxAmount).toFloat().coerceIn(0.01f, 1.0f)
+                        val expenseHeightFraction = (month.expense / maxAmount).toFloat().coerceIn(0.01f, 1.0f)
+                        
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Bottom,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.Bottom,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                // Income Bar
+                                Box(
+                                    modifier = Modifier
+                                        .width(18.dp)
+                                        .fillMaxHeight(incomeHeightFraction)
+                                        .background(Color(0xFF2E7D32), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                )
+                                // Expense Bar
+                                Box(
+                                    modifier = Modifier
+                                        .width(18.dp)
+                                        .fillMaxHeight(expenseHeightFraction)
+                                        .background(Color(0xFFBA1A1A), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Text(
+                                text = month.monthName,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF001D36),
+                                maxLines = 1
+                            )
+                            Text(
+                                text = month.yearString,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF44474E),
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+data class MonthSummary(
+    val year: Int,
+    val yearString: String,
+    val monthIndex: Int,
+    val monthName: String,
+    val income: Double,
+    val expense: Double
+)
