@@ -26,6 +26,20 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     private val _monthlyBudgetLimit = MutableStateFlow(appPrefs.getFloat(KEY_MONTHLY_BUDGET_LIMIT, 0f).toDouble())
     val monthlyBudgetLimit = _monthlyBudgetLimit.asStateFlow()
 
+    // Calendar mode: whether periods/months are grouped by Hebrew month or Gregorian billing cycle
+    private val _calendarMode = MutableStateFlow(
+        if (appPrefs.getString(KEY_CALENDAR_MODE, "HEBREW") == "GREGORIAN") CalendarMode.GREGORIAN else CalendarMode.HEBREW
+    )
+    val calendarMode = _calendarMode.asStateFlow()
+
+    // Day of month (1-28) on which the Gregorian billing cycle starts (relevant only in GREGORIAN mode)
+    private val _gregorianCycleStartDay = MutableStateFlow(appPrefs.getInt(KEY_GREGORIAN_START_DAY, 1))
+    val gregorianCycleStartDay = _gregorianCycleStartDay.asStateFlow()
+
+    // Recurring monthly income/expense rules
+    val recurringRules: StateFlow<List<RecurringRuleEntity>> = repository.allRecurringRules
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // Exposed lists
     val categories: StateFlow<List<CategoryEntity>> = repository.allCategories
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -61,47 +75,145 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.checkAndPrepopulateCategories()
             
-            // Set default selected month to current Hebrew month
-            val currentHebrew = HebrewCalendarHelper.getHebrewDateInfo(System.currentTimeMillis())
-            _selectedHebrewMonthIndex.value = currentHebrew.monthIndex
-            _selectedHebrewMonthName.value = currentHebrew.monthName
-            _selectedHebrewYear.value = currentHebrew.year
-            _selectedHebrewYearString.value = currentHebrew.yearHebrewString
+            // Set default selected period to the current period in whichever calendar mode is active
+            resetSelectionToCurrentPeriod()
+
+            // Auto-generate any due recurring income/expense transactions
+            checkAndGenerateRecurringTransactions()
         }
     }
 
-    // Filtered transactions for the selected Hebrew month & year
+    private fun resetSelectionToCurrentPeriod() {
+        if (_calendarMode.value == CalendarMode.HEBREW) {
+            val current = HebrewCalendarHelper.getHebrewDateInfo(System.currentTimeMillis())
+            _selectedHebrewMonthIndex.value = current.monthIndex
+            _selectedHebrewMonthName.value = current.monthName
+            _selectedHebrewYear.value = current.year
+            _selectedHebrewYearString.value = current.yearHebrewString
+        } else {
+            val cycle = GregorianCycleHelper.getCycleInfo(System.currentTimeMillis(), _gregorianCycleStartDay.value)
+            _selectedHebrewMonthIndex.value = cycle.month
+            _selectedHebrewMonthName.value = cycle.monthName
+            _selectedHebrewYear.value = cycle.year
+            _selectedHebrewYearString.value = cycle.year.toString()
+        }
+    }
+
+    // Returns (year, month-bucket) for a given timestamp, in terms of whichever calendar mode is currently active
+    private fun periodBucketFor(timestamp: Long): Pair<Int, Int> {
+        return if (_calendarMode.value == CalendarMode.HEBREW) {
+            val h = HebrewCalendarHelper.getHebrewDateInfo(timestamp)
+            h.year to h.monthIndex
+        } else {
+            val c = GregorianCycleHelper.getCycleInfo(timestamp, _gregorianCycleStartDay.value)
+            c.year to c.month
+        }
+    }
+
+    private suspend fun checkAndGenerateRecurringTransactions() {
+        val rules = repository.allRecurringRules.first()
+        if (rules.isEmpty()) return
+
+        val nowCal = Calendar.getInstance()
+        val currentPeriodKey = "${nowCal.get(Calendar.YEAR)}-${nowCal.get(Calendar.MONTH) + 1}"
+        val todayDay = nowCal.get(Calendar.DAY_OF_MONTH)
+
+        for (rule in rules) {
+            if (!rule.isActive) continue
+            if (rule.lastGeneratedPeriodKey == currentPeriodKey) continue
+            if (todayDay < rule.dayOfMonth) continue
+
+            val txCal = Calendar.getInstance()
+            val maxDay = txCal.getActualMaximum(Calendar.DAY_OF_MONTH)
+            txCal.set(Calendar.DAY_OF_MONTH, rule.dayOfMonth.coerceAtMost(maxDay))
+            val timestamp = txCal.timeInMillis
+            val hebrewInfo = HebrewCalendarHelper.getHebrewDateInfo(timestamp)
+
+            val entity = TransactionEntity(
+                title = rule.title,
+                amount = rule.amount,
+                isExpense = rule.isExpense,
+                categoryName = rule.categoryName,
+                paymentType = rule.paymentType,
+                timestamp = timestamp,
+                hebrewDay = hebrewInfo.day,
+                hebrewMonthIndex = hebrewInfo.monthIndex,
+                hebrewMonthName = hebrewInfo.monthName,
+                hebrewYear = hebrewInfo.year,
+                hebrewYearString = hebrewInfo.yearHebrewString,
+                rawText = "רשומה קבועה אוטומטית"
+            )
+            repository.insertTransaction(entity)
+            repository.updateRecurringRule(rule.copy(lastGeneratedPeriodKey = currentPeriodKey))
+        }
+    }
+
+    // Filtered transactions for the selected period (Hebrew month, or Gregorian billing cycle)
     val filteredTransactions: StateFlow<List<TransactionEntity>> = combine(
         allTransactions,
         _selectedHebrewMonthIndex,
-        _selectedHebrewYear
-    ) { transactions, monthIndex, year ->
-        transactions.filter {
-            it.hebrewMonthIndex == monthIndex && it.hebrewYear == year
+        _selectedHebrewYear,
+        _calendarMode,
+        _gregorianCycleStartDay
+    ) { transactions, month, year, mode, startDay ->
+        transactions.filter { tx ->
+            if (mode == CalendarMode.HEBREW) {
+                tx.hebrewMonthIndex == month && tx.hebrewYear == year
+            } else {
+                val cycle = GregorianCycleHelper.getCycleInfo(tx.timestamp, startDay)
+                cycle.month == month && cycle.year == year
+            }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // List of available months (Hebrew month + year) across all transactions, plus current month
-    val availableMonths: StateFlow<List<HebrewMonthYearOption>> = allTransactions.map { list ->
-        val current = HebrewCalendarHelper.getHebrewDateInfo(System.currentTimeMillis())
-        val currentOption = HebrewMonthYearOption(
-            monthIndex = current.monthIndex,
-            monthName = current.monthName,
-            year = current.year,
-            yearString = current.yearHebrewString
-        )
-        
-        val optionsFromTx = list.map {
-            HebrewMonthYearOption(
-                monthIndex = it.hebrewMonthIndex,
-                monthName = it.hebrewMonthName,
-                year = it.hebrewYear,
-                yearString = it.hebrewYearString
+    // List of available periods (Hebrew month+year, or Gregorian billing cycle month+year) across all transactions, plus current period
+    val availableMonths: StateFlow<List<HebrewMonthYearOption>> = combine(
+        allTransactions,
+        _calendarMode,
+        _gregorianCycleStartDay
+    ) { list, mode, startDay ->
+        if (mode == CalendarMode.HEBREW) {
+            val current = HebrewCalendarHelper.getHebrewDateInfo(System.currentTimeMillis())
+            val currentOption = HebrewMonthYearOption(
+                monthIndex = current.monthIndex,
+                monthName = current.monthName,
+                year = current.year,
+                yearString = current.yearHebrewString
             )
-        }.distinct()
 
-        (optionsFromTx + currentOption).distinctBy { "${it.year}_${it.monthIndex}" }
-            .sortedWith(compareBy<HebrewMonthYearOption> { it.year }.thenBy { it.monthIndex })
+            val optionsFromTx = list.map {
+                HebrewMonthYearOption(
+                    monthIndex = it.hebrewMonthIndex,
+                    monthName = it.hebrewMonthName,
+                    year = it.hebrewYear,
+                    yearString = it.hebrewYearString
+                )
+            }.distinct()
+
+            (optionsFromTx + currentOption).distinctBy { "${it.year}_${it.monthIndex}" }
+                .sortedWith(compareBy<HebrewMonthYearOption> { it.year }.thenBy { it.monthIndex })
+        } else {
+            val currentCycle = GregorianCycleHelper.getCycleInfo(System.currentTimeMillis(), startDay)
+            val currentOption = HebrewMonthYearOption(
+                monthIndex = currentCycle.month,
+                monthName = currentCycle.monthName,
+                year = currentCycle.year,
+                yearString = currentCycle.year.toString()
+            )
+
+            val optionsFromTx = list.map {
+                val cycle = GregorianCycleHelper.getCycleInfo(it.timestamp, startDay)
+                HebrewMonthYearOption(
+                    monthIndex = cycle.month,
+                    monthName = cycle.monthName,
+                    year = cycle.year,
+                    yearString = cycle.year.toString()
+                )
+            }.distinct()
+
+            (optionsFromTx + currentOption).distinctBy { "${it.year}_${it.monthIndex}" }
+                .sortedWith(compareBy<HebrewMonthYearOption> { it.year }.thenBy { it.monthIndex })
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Calculations for the current selected month
@@ -173,6 +285,60 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         appPrefs.edit().putFloat(KEY_MONTHLY_BUDGET_LIMIT, safeLimit.toFloat()).apply()
     }
 
+    // Switch between viewing periods by Hebrew month or by Gregorian billing cycle
+    fun setCalendarMode(mode: CalendarMode) {
+        _calendarMode.value = mode
+        appPrefs.edit().putString(KEY_CALENDAR_MODE, mode.name).apply()
+        resetSelectionToCurrentPeriod()
+    }
+
+    // Set which day of the Gregorian month the billing cycle starts on (1-28)
+    fun setGregorianCycleStartDay(day: Int) {
+        val safeDay = day.coerceIn(1, 28)
+        _gregorianCycleStartDay.value = safeDay
+        appPrefs.edit().putInt(KEY_GREGORIAN_START_DAY, safeDay).apply()
+        if (_calendarMode.value == CalendarMode.GREGORIAN) resetSelectionToCurrentPeriod()
+    }
+
+    // Add a new recurring monthly income/expense rule
+    fun addRecurringRule(
+        title: String,
+        amount: Double,
+        isExpense: Boolean,
+        categoryName: String,
+        paymentType: String,
+        dayOfMonth: Int
+    ) {
+        if (title.isBlank() || amount <= 0.0) return
+        val safeDay = dayOfMonth.coerceIn(1, 28)
+        viewModelScope.launch {
+            repository.insertRecurringRule(
+                RecurringRuleEntity(
+                    title = title.trim(),
+                    amount = amount,
+                    isExpense = isExpense,
+                    categoryName = categoryName,
+                    paymentType = paymentType,
+                    dayOfMonth = safeDay,
+                    isActive = true,
+                    lastGeneratedPeriodKey = null
+                )
+            )
+        }
+    }
+
+    fun setRecurringRuleActive(rule: RecurringRuleEntity, isActive: Boolean) {
+        viewModelScope.launch {
+            repository.updateRecurringRule(rule.copy(isActive = isActive))
+        }
+    }
+
+    fun deleteRecurringRule(rule: RecurringRuleEntity) {
+        viewModelScope.launch {
+            repository.deleteRecurringRule(rule)
+        }
+    }
+
     // Insert transaction
     fun addManualTransaction(
         title: String,
@@ -185,6 +351,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         if (title.isBlank() || amount <= 0.0) return
         viewModelScope.launch {
             val hebrewInfo = HebrewCalendarHelper.getHebrewDateInfo(timestamp)
+            val (periodYear, periodMonth) = periodBucketFor(timestamp)
 
             // Check budget limits before saving the transaction
             if (isExpense) {
@@ -192,7 +359,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                 val limit = category?.budgetLimit ?: 0.0
                 if (limit > 0.0) {
                     val currentCategoryTotal = allTransactions.value
-                        .filter { it.isExpense && it.categoryName == categoryName && it.hebrewMonthIndex == hebrewInfo.monthIndex && it.hebrewYear == hebrewInfo.year }
+                        .filter { it.isExpense && it.categoryName == categoryName && periodBucketFor(it.timestamp) == (periodYear to periodMonth) }
                         .sumOf { it.amount }
                     val newTotal = currentCategoryTotal + amount
                     val pBefore = currentCategoryTotal / limit
@@ -215,7 +382,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                 val overallLimit = _monthlyBudgetLimit.value
                 if (overallLimit > 0.0) {
                     val currentMonthTotal = allTransactions.value
-                        .filter { it.isExpense && it.hebrewMonthIndex == hebrewInfo.monthIndex && it.hebrewYear == hebrewInfo.year }
+                        .filter { it.isExpense && periodBucketFor(it.timestamp) == (periodYear to periodMonth) }
                         .sumOf { it.amount }
                     val newMonthTotal = currentMonthTotal + amount
                     val pBeforeOverall = currentMonthTotal / overallLimit
@@ -341,8 +508,12 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
 
     companion object {
         private const val KEY_MONTHLY_BUDGET_LIMIT = "monthly_budget_limit"
+        private const val KEY_CALENDAR_MODE = "calendar_mode"
+        private const val KEY_GREGORIAN_START_DAY = "gregorian_cycle_start_day"
     }
 }
+
+enum class CalendarMode { HEBREW, GREGORIAN }
 
 // Helper structures
 data class HebrewMonthYearOption(
