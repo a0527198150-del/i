@@ -2236,13 +2236,16 @@ fun EditMonthlyBudgetDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
-                ) {
-                    TextButton(
-                        onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
-                    ) {
-                        Text("ביטול", fontWeight = FontWeight.Bold)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.End) ) {
+
+                               TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color(0xFF44474E)
+                )
+            ) {
+                Text("ביטול",
+ fontWeight = FontWeight.Bold)
                     }
 
                     Button(
