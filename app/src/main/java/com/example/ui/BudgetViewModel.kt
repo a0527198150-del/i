@@ -216,7 +216,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Calculations for the current selected month
+    // Calculations for the current selected month (anomalous/unusual transactions are excluded from all totals)
     val monthlyStats: StateFlow<MonthlyStats> = filteredTransactions.map { list ->
         var totalIncome = 0.0
         var totalExpense = 0.0
@@ -224,9 +224,15 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         var creditExpense = 0.0
         var cashIncome = 0.0
         var creditIncome = 0.0
+        var anomalousExpenseTotal = 0.0
+        var anomalousIncomeTotal = 0.0
 
         for (tx in list) {
             val amount = tx.amount
+            if (tx.isAnomalous) {
+                if (tx.isExpense) anomalousExpenseTotal += amount else anomalousIncomeTotal += amount
+                continue
+            }
             if (tx.isExpense) {
                 totalExpense += amount
                 if (tx.paymentType == "CASH") cashExpense += amount else creditExpense += amount
@@ -243,7 +249,9 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             creditExpense = creditExpense,
             cashIncome = cashIncome,
             creditIncome = creditIncome,
-            netBalance = totalIncome - totalExpense
+            netBalance = totalIncome - totalExpense,
+            anomalousExpenseTotal = anomalousExpenseTotal,
+            anomalousIncomeTotal = anomalousIncomeTotal
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MonthlyStats())
 
@@ -346,20 +354,21 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         isExpense: Boolean,
         categoryName: String,
         paymentType: String, // "CASH" or "CREDIT"
-        timestamp: Long = System.currentTimeMillis()
+        timestamp: Long = System.currentTimeMillis(),
+        isAnomalous: Boolean = false
     ) {
         if (title.isBlank() || amount <= 0.0) return
         viewModelScope.launch {
             val hebrewInfo = HebrewCalendarHelper.getHebrewDateInfo(timestamp)
             val (periodYear, periodMonth) = periodBucketFor(timestamp)
 
-            // Check budget limits before saving the transaction
-            if (isExpense) {
+            // Anomalous (one-off/unusual) transactions are excluded from budget-limit checks entirely
+            if (isExpense && !isAnomalous) {
                 val category = categories.value.find { it.name == categoryName }
                 val limit = category?.budgetLimit ?: 0.0
                 if (limit > 0.0) {
                     val currentCategoryTotal = allTransactions.value
-                        .filter { it.isExpense && it.categoryName == categoryName && periodBucketFor(it.timestamp) == (periodYear to periodMonth) }
+                        .filter { !it.isAnomalous && it.isExpense && it.categoryName == categoryName && periodBucketFor(it.timestamp) == (periodYear to periodMonth) }
                         .sumOf { it.amount }
                     val newTotal = currentCategoryTotal + amount
                     val pBefore = currentCategoryTotal / limit
@@ -382,7 +391,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                 val overallLimit = _monthlyBudgetLimit.value
                 if (overallLimit > 0.0) {
                     val currentMonthTotal = allTransactions.value
-                        .filter { it.isExpense && periodBucketFor(it.timestamp) == (periodYear to periodMonth) }
+                        .filter { !it.isAnomalous && it.isExpense && periodBucketFor(it.timestamp) == (periodYear to periodMonth) }
                         .sumOf { it.amount }
                     val newMonthTotal = currentMonthTotal + amount
                     val pBeforeOverall = currentMonthTotal / overallLimit
@@ -413,7 +422,8 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                 hebrewMonthIndex = hebrewInfo.monthIndex,
                 hebrewMonthName = hebrewInfo.monthName,
                 hebrewYear = hebrewInfo.year,
-                hebrewYearString = hebrewInfo.yearHebrewString
+                hebrewYearString = hebrewInfo.yearHebrewString,
+                isAnomalous = isAnomalous
             )
             repository.insertTransaction(entity)
         }
@@ -532,5 +542,7 @@ data class MonthlyStats(
     val creditExpense: Double = 0.0,
     val cashIncome: Double = 0.0,
     val creditIncome: Double = 0.0,
-    val netBalance: Double = 0.0
+    val netBalance: Double = 0.0,
+    val anomalousExpenseTotal: Double = 0.0,
+    val anomalousIncomeTotal: Double = 0.0
 )
