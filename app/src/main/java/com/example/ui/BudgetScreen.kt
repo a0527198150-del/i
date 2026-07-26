@@ -610,36 +610,55 @@ fun BudgetDashboardCard(
                 }
             }
 
-            // Big balance display
+            // Big balance display, with anomalous totals shown large alongside it on the other side
             val balanceSign = if (stats.netBalance >= 0) "" else "-"
             val absoluteBalance = kotlin.math.abs(stats.netBalance)
             val balanceColor = if (stats.netBalance >= 0) Color(0xFF1B5E20) else Color(0xFFB71C1C)
-            Text(
-                text = "${balanceSign}₪${decFormat.format(absoluteBalance)}",
-                fontSize = 38.sp,
-                fontWeight = FontWeight.Bold,
-                color = balanceColor,
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
+            val hasAnomalous = stats.anomalousExpenseTotal > 0.0 || stats.anomalousIncomeTotal > 0.0
 
-            // Anomalous (unusual/one-off) totals, shown separately - not included in the balance above
-            if (stats.anomalousExpenseTotal > 0.0 || stats.anomalousIncomeTotal > 0.0) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    if (stats.anomalousExpenseTotal > 0.0) {
-                        Text(
-                            text = "הוצאה חריגה: ₪${decFormat.format(stats.anomalousExpenseTotal)} (לא נכלל ביתרה)",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF6B4E00)
-                        )
-                    }
-                    if (stats.anomalousIncomeTotal > 0.0) {
-                        Text(
-                            text = "הכנסה חריגה: ₪${decFormat.format(stats.anomalousIncomeTotal)} (לא נכלל ביתרה)",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF6B4E00)
-                        )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = if (hasAnomalous) Arrangement.SpaceBetween else Arrangement.Start,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = "${balanceSign}₪${decFormat.format(absoluteBalance)}",
+                    fontSize = 38.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = balanceColor,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+
+                if (hasAnomalous) {
+                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                        if (stats.anomalousExpenseTotal > 0.0) {
+                            Text(
+                                text = "הוצאה חריגה",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF6B4E00)
+                            )
+                            Text(
+                                text = "₪${decFormat.format(stats.anomalousExpenseTotal)}",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF6B4E00)
+                            )
+                        }
+                        if (stats.anomalousIncomeTotal > 0.0) {
+                            Text(
+                                text = "הכנסה חריגה",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF6B4E00)
+                            )
+                            Text(
+                                text = "₪${decFormat.format(stats.anomalousIncomeTotal)}",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF6B4E00)
+                            )
+                        }
                     }
                 }
             }
