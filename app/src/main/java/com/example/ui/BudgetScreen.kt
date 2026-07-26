@@ -395,7 +395,7 @@ fun BudgetScreen(
                     }
                 } else if (currentTab == 1) {
                     // TAB 1: Grouped By Categories & Budgets
-                    val grouped = filteredTransactions.groupBy { it.categoryName }
+                    val grouped = filteredTransactions.filter { !it.isAnomalous }.groupBy { it.categoryName }
                     
                     if (categories.isEmpty()) {
                         item {
@@ -428,7 +428,7 @@ fun BudgetScreen(
                         ) {
                             DonutChartCard(
                                 categories = categories,
-                                transactions = filteredTransactions
+                                transactions = filteredTransactions.filter { !it.isAnomalous }
                             )
 
                             CashCreditBreakdownCard(
@@ -436,7 +436,7 @@ fun BudgetScreen(
                             )
                             
                             BarChartCard(
-                                allTransactions = allTransactions
+                                allTransactions = allTransactions.filter { !it.isAnomalous }
                             )
                         }
                     }
@@ -483,14 +483,15 @@ fun BudgetScreen(
         if (showManualAddDialog) {
             ManualAddTransactionDialog(
                 categories = categories,
-                onAdd = { title, amount, isExpense, category, paymentType, timestamp ->
+                onAdd = { title, amount, isExpense, category, paymentType, timestamp, isAnomalous ->
                     viewModel.addManualTransaction(
                         title = title,
                         amount = amount,
                         isExpense = isExpense,
                         categoryName = category,
                         paymentType = paymentType,
-                        timestamp = timestamp
+                        timestamp = timestamp,
+                        isAnomalous = isAnomalous
                     )
                     showManualAddDialog = false
                 },
@@ -620,6 +621,28 @@ fun BudgetDashboardCard(
                 color = balanceColor,
                 modifier = Modifier.padding(vertical = 4.dp)
             )
+
+            // Anomalous (unusual/one-off) totals, shown separately - not included in the balance above
+            if (stats.anomalousExpenseTotal > 0.0 || stats.anomalousIncomeTotal > 0.0) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    if (stats.anomalousExpenseTotal > 0.0) {
+                        Text(
+                            text = "הוצאה חריגה: ₪${decFormat.format(stats.anomalousExpenseTotal)} (לא נכלל ביתרה)",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF6B4E00)
+                        )
+                    }
+                    if (stats.anomalousIncomeTotal > 0.0) {
+                        Text(
+                            text = "הכנסה חריגה: ₪${decFormat.format(stats.anomalousIncomeTotal)} (לא נכלל ביתרה)",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF6B4E00)
+                        )
+                    }
+                }
+            }
 
             // Total Income / Expense side-by-side
             Row(
@@ -960,12 +983,28 @@ fun TransactionItemRow(
                 }
 
                 Column {
-                    Text(
-                        text = transaction.title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF191C1E)
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = transaction.title,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF191C1E)
+                        )
+                        if (transaction.isAnomalous) {
+                            Surface(
+                                color = Color(0xFFFFF3CD),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = "חריג",
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF6B4E00)
+                                )
+                            }
+                        }
+                    }
                     
                     Text(
                         text = "${transaction.categoryName} • ${if (transaction.paymentType == "CASH") "מזומן" else "אשראי"} • יום ${transaction.hebrewDay} ב${transaction.hebrewMonthName}",
@@ -1655,7 +1694,7 @@ fun GeminiDraftConfirmDialog(
 @Composable
 fun ManualAddTransactionDialog(
     categories: List<CategoryEntity>,
-    onAdd: (title: String, amount: Double, isExpense: Boolean, category: String, paymentType: String, timestamp: Long) -> Unit,
+    onAdd: (title: String, amount: Double, isExpense: Boolean, category: String, paymentType: String, timestamp: Long, isAnomalous: Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     var title by remember { mutableStateOf("") }
@@ -1664,6 +1703,7 @@ fun ManualAddTransactionDialog(
     var paymentType by remember { mutableStateOf("CREDIT") } // "CREDIT" or "CASH"
     var selectedCategoryName by remember { mutableStateOf(categories.firstOrNull()?.name ?: "אחר") }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
+    var isAnomalous by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -1779,6 +1819,35 @@ fun ManualAddTransactionDialog(
                     )
                 )
 
+                // Anomalous (unusual/one-off) transaction toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFFFF8E1), RoundedCornerShape(12.dp))
+                        .clickable { isAnomalous = !isAnomalous }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (isExpense) "הוצאה חריגה" else "הכנסה חריגה",
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF6B4E00)
+                        )
+                        Text(
+                            text = "לא ייכלל ביתרה ובסטטיסטיקות - יוצג בנפרד",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF6B4E00).copy(alpha = 0.8f)
+                        )
+                    }
+                    Checkbox(
+                        checked = isAnomalous,
+                        onCheckedChange = { isAnomalous = it },
+                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF6B4E00))
+                    )
+                }
+
                 // Cash / Credit toggle
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1887,7 +1956,7 @@ fun ManualAddTransactionDialog(
                         onClick = {
                             val amt = amountStr.toDoubleOrNull() ?: 0.0
                             if (title.isNotBlank() && amt > 0.0) {
-                                onAdd(title, amt, isExpense, selectedCategoryName, paymentType, System.currentTimeMillis())
+                                onAdd(title, amt, isExpense, selectedCategoryName, paymentType, System.currentTimeMillis(), isAnomalous)
                             }
                         },
                         enabled = title.isNotBlank() && (amountStr.toDoubleOrNull() ?: 0.0) > 0.0,
