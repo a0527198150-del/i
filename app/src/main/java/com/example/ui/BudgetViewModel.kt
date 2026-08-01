@@ -499,14 +499,24 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     // Confirm and save Gemini drafted transaction
     fun confirmDraftTransaction(categoryName: String? = null) {
         val draft = _parsedDraft.value ?: return
-        addManualTransaction(
-            title = draft.title,
-            amount = draft.amount,
-            isExpense = draft.isExpense,
-            categoryName = categoryName ?: draft.categoryName,
-            paymentType = draft.paymentType,
-            timestamp = System.currentTimeMillis()
-        )
+        val finalCategoryName = (categoryName ?: draft.categoryName).trim()
+
+        viewModelScope.launch {
+            // If this category doesn't exist yet (e.g. a brand-new one Gemini proposed), create it now
+            val exists = categories.value.any { it.name == finalCategoryName }
+            if (!exists && finalCategoryName.isNotBlank()) {
+                repository.insertCategory(CategoryEntity(name = finalCategoryName))
+            }
+
+            addManualTransaction(
+                title = draft.title,
+                amount = draft.amount,
+                isExpense = draft.isExpense,
+                categoryName = finalCategoryName,
+                paymentType = draft.paymentType,
+                timestamp = System.currentTimeMillis()
+            )
+        }
         _parsedDraft.value = null
     }
 
