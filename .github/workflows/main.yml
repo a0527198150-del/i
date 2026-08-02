@@ -29,6 +29,8 @@ jobs:
           gradle-version: '9.3.1'
 
       - name: Build with Gradle (Release)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: gradle assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK artifact
