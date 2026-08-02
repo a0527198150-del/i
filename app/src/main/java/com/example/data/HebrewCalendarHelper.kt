@@ -72,6 +72,26 @@ object HebrewCalendarHelper {
         )
     }
     
+    // Total number of days in a given Hebrew month/year (e.g. 29 or 30) - needed for spending-pace forecasts
+    fun getDaysInHebrewMonth(year: Int, monthIndex: Int): Int {
+        val cal = HebrewCalendar()
+        cal.clear()
+        cal.set(Calendar.YEAR, year)
+        cal.set(Calendar.MONTH, monthIndex)
+        cal.set(Calendar.DAY_OF_MONTH, 1)
+        return cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+    }
+
+    // Timestamp (millis) of the 1st day of a given Hebrew month/year - needed for spending-pace forecasts
+    fun getHebrewMonthStartTimestamp(year: Int, monthIndex: Int): Long {
+        val cal = HebrewCalendar()
+        cal.clear()
+        cal.set(Calendar.YEAR, year)
+        cal.set(Calendar.MONTH, monthIndex)
+        cal.set(Calendar.DAY_OF_MONTH, 1)
+        return cal.timeInMillis
+    }
+
     private fun getHebrewDayGematria(day: Int): String {
         return when (day) {
             1 -> "א'"
