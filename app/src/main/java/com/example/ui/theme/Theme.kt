@@ -11,18 +11,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+enum class ThemeMode { LIGHT, DARK, SYSTEM }
+
 private val DarkColorScheme =
   darkColorScheme(
-    primary = MinimalistContainer,
-    onPrimary = MinimalistOnContainer,
-    primaryContainer = MinimalistContainer,
-    onPrimaryContainer = MinimalistOnContainer,
-    secondary = MinimalistAccent,
-    onSecondary = MinimalistBg,
-    background = MinimalistBg,
-    surface = Color.White,
-    onBackground = MinimalistTextPrimary,
-    onSurface = MinimalistTextPrimary,
+    primary = MinimalistDarkAccent,
+    onPrimary = MinimalistDarkBg,
+    primaryContainer = MinimalistDarkContainer,
+    onPrimaryContainer = MinimalistDarkOnContainer,
+    secondary = MinimalistDarkAccent,
+    onSecondary = MinimalistDarkBg,
+    background = MinimalistDarkBg,
+    surface = MinimalistDarkSurface,
+    onBackground = MinimalistDarkTextPrimary,
+    onSurface = MinimalistDarkTextPrimary,
+    surfaceVariant = MinimalistDarkNavBg,
+    onSurfaceVariant = MinimalistDarkTextSecondary,
+    outline = MinimalistDarkBorder,
+    outlineVariant = MinimalistDarkLightBorder,
     error = MinimalistError
   )
 
@@ -44,6 +50,14 @@ private val LightColorScheme =
     outlineVariant = MinimalistLightBorder,
     error = MinimalistError
   )
+
+@Composable
+fun resolveDarkTheme(mode: ThemeMode): Boolean =
+  when (mode) {
+    ThemeMode.LIGHT -> false
+    ThemeMode.DARK -> true
+    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+  }
 
 @Composable
 fun MyApplicationTheme(
