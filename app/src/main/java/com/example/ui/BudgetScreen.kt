@@ -1541,16 +1541,10 @@ fun GeminiDraftConfirmDialog(
     onDismiss: () -> Unit
 ) {
     var selectedCategory by remember { mutableStateOf(draft.categoryName) }
-    var dropdownExpanded by remember { mutableStateOf(false) }
     val decFormat = remember { DecimalFormat("#,##0.00") }
 
-    // Check if parsed category actually exists in database; if not, default to "אחר" or draft's proposed name
-    LaunchedEffect(availableCategories, draft) {
-        val matchesExisting = availableCategories.any { it.name == draft.categoryName }
-        if (!matchesExisting && availableCategories.isNotEmpty()) {
-            selectedCategory = availableCategories.firstOrNull { it.name == "אחר" }?.name ?: draft.categoryName
-        }
-    }
+    // Is the category Gemini proposed a brand-new one (not yet in the app)?
+    val isNewCategory = availableCategories.none { it.name == selectedCategory }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -1560,9 +1554,12 @@ fun GeminiDraftConfirmDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
+                .heightIn(max = 640.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
@@ -1614,21 +1611,78 @@ fun GeminiDraftConfirmDialog(
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text("קטגוריה:", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF44474E), fontWeight = FontWeight.SemiBold)
                         Spacer(modifier = Modifier.height(6.dp))
-                        
+
+                        if (isNewCategory) {
+                            Surface(
+                                color = Color(0xFFE8F0FE),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "ג'מיני הציע קטגוריה חדשה: \"$selectedCategory\" - אם תשמור, היא תיווצר אוטומטית. אפשר גם לבחור קטגוריה קיימת במקום.",
+                                    modifier = Modifier.padding(10.dp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF1A3E7C)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(max = 140.dp)
+                                .heightIn(min = 160.dp, max = 260.dp)
                                 .border(1.dp, Color(0xFFE1E2EC), RoundedCornerShape(12.dp))
                                 .background(Color(0xFFF8F9FF), RoundedCornerShape(12.dp))
-                                .padding(6.dp)
+                                .padding(8.dp)
                         ) {
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(2),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
+                                // If Gemini proposed a brand-new category, show it as a selectable option first
+                                if (isNewCategory) {
+                                    item {
+                                        val isSelected = selectedCategory == draft.categoryName
+                                        Card(
+                                            shape = RoundedCornerShape(10.dp),
+                                            colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF001D36) else Color.White),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = 56.dp)
+                                                .clickable { selectedCategory = draft.categoryName },
+                                            border = if (isSelected) null else BorderStroke(1.dp, Color(0xFF8AB4F8))
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .padding(horizontal = 10.dp, vertical = 10.dp)
+                                                    .fillMaxWidth(),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Text(text = "✨", fontSize = 18.sp)
+                                                Column {
+                                                    Text(
+                                                        text = draft.categoryName,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                        color = if (isSelected) Color.White else Color(0xFF001D36),
+                                                        maxLines = 2,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                    Text(
+                                                        text = "חדשה",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = if (isSelected) Color.White.copy(alpha = 0.8f) else Color(0xFF1A3E7C)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
                                 items(availableCategories) { category ->
                                     val isSelected = category.name == selectedCategory
                                     val emoji = when (category.name) {
@@ -1646,27 +1700,28 @@ fun GeminiDraftConfirmDialog(
                                     val contentColor = if (isSelected) Color.White else Color(0xFF001D36)
                                     
                                     Card(
-                                        shape = RoundedCornerShape(8.dp),
+                                        shape = RoundedCornerShape(10.dp),
                                         colors = CardDefaults.cardColors(containerColor = backgroundColor),
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .heightIn(min = 56.dp)
                                             .clickable { selectedCategory = category.name },
                                         border = if (isSelected) null else BorderStroke(1.dp, Color(0xFFE1E2EC))
                                     ) {
                                         Row(
                                             modifier = Modifier
-                                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                                                .padding(horizontal = 10.dp, vertical = 10.dp)
                                                 .fillMaxWidth(),
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
-                                            Text(text = emoji, fontSize = 12.sp)
+                                            Text(text = emoji, fontSize = 18.sp)
                                             Text(
                                                 text = category.name,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                 color = contentColor,
-                                                maxLines = 1,
+                                                maxLines = 2,
                                                 overflow = TextOverflow.Ellipsis
                                             )
                                         }
