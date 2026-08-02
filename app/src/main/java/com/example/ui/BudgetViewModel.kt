@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
 import com.example.data.*
+import com.example.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -31,6 +32,16 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         if (appPrefs.getString(KEY_CALENDAR_MODE, "HEBREW") == "GREGORIAN") CalendarMode.GREGORIAN else CalendarMode.HEBREW
     )
     val calendarMode = _calendarMode.asStateFlow()
+
+    // App display theme: light / dark / follow system
+    private val _themeMode = MutableStateFlow(
+        when (appPrefs.getString(KEY_THEME_MODE, "SYSTEM")) {
+            "LIGHT" -> ThemeMode.LIGHT
+            "DARK" -> ThemeMode.DARK
+            else -> ThemeMode.SYSTEM
+        }
+    )
+    val themeMode = _themeMode.asStateFlow()
 
     // Day of month (1-28) on which the Gregorian billing cycle starts (relevant only in GREGORIAN mode)
     private val _gregorianCycleStartDay = MutableStateFlow(appPrefs.getInt(KEY_GREGORIAN_START_DAY, 1))
@@ -384,6 +395,12 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         resetSelectionToCurrentPeriod()
     }
 
+    // Change the app's display theme (light / dark / follow system)
+    fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+        appPrefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
+    }
+
     // Set which day of the Gregorian month the billing cycle starts on (1-28)
     fun setGregorianCycleStartDay(day: Int) {
         val safeDay = day.coerceIn(1, 28)
@@ -613,6 +630,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     companion object {
         private const val KEY_MONTHLY_BUDGET_LIMIT = "monthly_budget_limit"
         private const val KEY_CALENDAR_MODE = "calendar_mode"
+        private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_GREGORIAN_START_DAY = "gregorian_cycle_start_day"
     }
 }
