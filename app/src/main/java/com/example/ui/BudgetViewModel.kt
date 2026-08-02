@@ -36,6 +36,21 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     private val _gregorianCycleStartDay = MutableStateFlow(appPrefs.getInt(KEY_GREGORIAN_START_DAY, 1))
     val gregorianCycleStartDay = _gregorianCycleStartDay.asStateFlow()
 
+    // Display theme: light / dark / follow system
+    private val _themeMode = MutableStateFlow(
+        when (appPrefs.getString(KEY_THEME_MODE, "SYSTEM")) {
+            "LIGHT" -> com.example.ui.theme.ThemeMode.LIGHT
+            "DARK" -> com.example.ui.theme.ThemeMode.DARK
+            else -> com.example.ui.theme.ThemeMode.SYSTEM
+        }
+    )
+    val themeMode = _themeMode.asStateFlow()
+
+    fun setThemeMode(mode: com.example.ui.theme.ThemeMode) {
+        _themeMode.value = mode
+        appPrefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
+    }
+
     // Recurring monthly income/expense rules
     val recurringRules: StateFlow<List<RecurringRuleEntity>> = repository.allRecurringRules
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -530,6 +545,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         private const val KEY_MONTHLY_BUDGET_LIMIT = "monthly_budget_limit"
         private const val KEY_CALENDAR_MODE = "calendar_mode"
         private const val KEY_GREGORIAN_START_DAY = "gregorian_cycle_start_day"
+        private const val KEY_THEME_MODE = "theme_mode"
     }
 }
 
