@@ -36,21 +36,6 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     private val _gregorianCycleStartDay = MutableStateFlow(appPrefs.getInt(KEY_GREGORIAN_START_DAY, 1))
     val gregorianCycleStartDay = _gregorianCycleStartDay.asStateFlow()
 
-    // Display theme: light / dark / follow system
-    private val _themeMode = MutableStateFlow(
-        when (appPrefs.getString(KEY_THEME_MODE, "SYSTEM")) {
-            "LIGHT" -> com.example.ui.theme.ThemeMode.LIGHT
-            "DARK" -> com.example.ui.theme.ThemeMode.DARK
-            else -> com.example.ui.theme.ThemeMode.SYSTEM
-        }
-    )
-    val themeMode = _themeMode.asStateFlow()
-
-    fun setThemeMode(mode: com.example.ui.theme.ThemeMode) {
-        _themeMode.value = mode
-        appPrefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
-    }
-
     // Recurring monthly income/expense rules
     val recurringRules: StateFlow<List<RecurringRuleEntity>> = repository.allRecurringRules
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -269,6 +254,90 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             anomalousIncomeTotal = anomalousIncomeTotal
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MonthlyStats())
+
+    // Groups the 4 period-defining flows into one, since combine() only has typed overloads up to 5 flows
+    private data class PeriodInfo(val month: Int, val year: Int, val mode: CalendarMode, val startDay: Int)
+
+    private val periodInfo: StateFlow<PeriodInfo> = combine(
+        _selectedHebrewMonthIndex,
+        _selectedHebrewYear,
+        _calendarMode,
+        _gregorianCycleStartDay
+    ) { month, year, mode, startDay -> PeriodInfo(month, year, mode, startDay) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PeriodInfo(0, 0, CalendarMode.HEBREW, 1))
+
+    // Spending-pace forecast for the currently selected period (only meaningful while that period is ongoing)
+    val spendingForecast: StateFlow<SpendingForecast> = combine(
+        filteredTransactions,
+        recurringRules,
+        periodInfo
+    ) { list, rules, info ->
+        computeForecast(list, info.month, info.year, info.mode, info.startDay, rules)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SpendingForecast())
+
+    private fun computeForecast(
+        transactions: List<TransactionEntity>,
+        month: Int,
+        year: Int,
+        mode: CalendarMode,
+        startDay: Int,
+        rules: List<RecurringRuleEntity>
+    ): SpendingForecast {
+        val now = System.currentTimeMillis()
+        val (currentYear, currentMonth) = periodBucketFor(now)
+
+        // The forecast only makes sense for the period that is actually running right now
+        if (year != currentYear || month != currentMonth) {
+            return SpendingForecast(hasData = false)
+        }
+
+        val periodStart: Long
+        val totalDays: Int
+        if (mode == CalendarMode.HEBREW) {
+            periodStart = HebrewCalendarHelper.getHebrewMonthStartTimestamp(year, month)
+            totalDays = HebrewCalendarHelper.getDaysInHebrewMonth(year, month)
+        } else {
+            periodStart = GregorianCycleHelper.getCycleStartTimestamp(year, month, startDay)
+            totalDays = GregorianCycleHelper.getDaysInCycle(year, month, startDay)
+        }
+
+        val msPerDay = 24L * 60 * 60 * 1000
+        val daysElapsed = (((now - periodStart) / msPerDay).toInt() + 1).coerceIn(1, totalDays)
+
+        // Anomalous transactions are excluded from the rate calculation, consistent with the rest of the app
+        val actualExpenseSoFar = transactions.filter { !it.isAnomalous && it.isExpense }.sumOf { it.amount }
+        val actualIncomeSoFar = transactions.filter { !it.isAnomalous && !it.isExpense }.sumOf { it.amount }
+
+        val dailyRate = actualExpenseSoFar / daysElapsed
+        val projectedExpense = dailyRate * totalDays
+
+        val activeIncomeRules = rules.filter { it.isActive && !it.isExpense }
+        val hasRecurringIncome = activeIncomeRules.isNotEmpty()
+
+        // For each active recurring income rule, only count it toward the projection if it hasn't
+        // already generated a transaction this period (otherwise it would be double-counted)
+        var projectedRemainingIncome = 0.0
+        for (rule in activeIncomeRules) {
+            val alreadyGenerated = transactions.any {
+                !it.isExpense && it.title == rule.title && it.amount == rule.amount
+            }
+            if (!alreadyGenerated) projectedRemainingIncome += rule.amount
+        }
+        val projectedIncome = actualIncomeSoFar + projectedRemainingIncome
+        val projectedBalance = projectedIncome - projectedExpense
+
+        return SpendingForecast(
+            hasData = true,
+            daysElapsed = daysElapsed,
+            totalDaysInPeriod = totalDays,
+            dailyRate = dailyRate,
+            actualExpenseSoFar = actualExpenseSoFar,
+            projectedExpense = projectedExpense,
+            hasRecurringIncome = hasRecurringIncome,
+            projectedIncome = projectedIncome,
+            projectedBalance = projectedBalance
+        )
+    }
 
     // Select different month
     fun selectMonth(option: HebrewMonthYearOption) {
@@ -545,7 +614,6 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         private const val KEY_MONTHLY_BUDGET_LIMIT = "monthly_budget_limit"
         private const val KEY_CALENDAR_MODE = "calendar_mode"
         private const val KEY_GREGORIAN_START_DAY = "gregorian_cycle_start_day"
-        private const val KEY_THEME_MODE = "theme_mode"
     }
 }
 
@@ -571,4 +639,17 @@ data class MonthlyStats(
     val netBalance: Double = 0.0,
     val anomalousExpenseTotal: Double = 0.0,
     val anomalousIncomeTotal: Double = 0.0
+)
+
+// Spending-pace forecast for the currently ongoing period
+data class SpendingForecast(
+    val hasData: Boolean = false,
+    val daysElapsed: Int = 0,
+    val totalDaysInPeriod: Int = 0,
+    val dailyRate: Double = 0.0,
+    val actualExpenseSoFar: Double = 0.0,
+    val projectedExpense: Double = 0.0,
+    val hasRecurringIncome: Boolean = false,
+    val projectedIncome: Double = 0.0,
+    val projectedBalance: Double = 0.0
 )
