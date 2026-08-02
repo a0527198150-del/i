@@ -45,4 +45,25 @@ object GregorianCycleHelper {
             monthName = monthNamesHebrew[month]
         )
     }
+
+    // Timestamp (millis) of the first day of a given cycle bucket (year + 1-based month number)
+    fun getCycleStartTimestamp(year: Int, month: Int, startDay: Int): Long {
+        val safeStartDay = startDay.coerceIn(1, 28)
+        val cal = Calendar.getInstance()
+        cal.clear()
+        cal.set(year, month - 1, safeStartDay, 0, 0, 0)
+        return cal.timeInMillis
+    }
+
+    // Total number of days spanned by a given cycle bucket - needed for spending-pace forecasts
+    fun getDaysInCycle(year: Int, month: Int, startDay: Int): Int {
+        val start = getCycleStartTimestamp(year, month, startDay)
+        val safeStartDay = startDay.coerceIn(1, 28)
+        val endCal = Calendar.getInstance()
+        endCal.clear()
+        endCal.set(year, month - 1, safeStartDay, 0, 0, 0)
+        endCal.add(Calendar.MONTH, 1)
+        val end = endCal.timeInMillis
+        return ((end - start) / (24L * 60 * 60 * 1000)).toInt()
+    }
 }
