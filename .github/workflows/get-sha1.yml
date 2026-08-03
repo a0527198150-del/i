@@ -1,0 +1,16 @@
+name: Get SHA-1
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sha1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore stable debug keystore
+        run: |
+          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
+
+      - name: Print SHA-1
+        run: |
+          keytool -list -v -keystore debug.keystore -storepass android -alias androiddebugkey
