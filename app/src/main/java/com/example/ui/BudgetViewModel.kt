@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
 import com.example.data.*
 import com.example.ui.theme.ThemeMode
+import com.example.widget.BalanceWidget
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -157,6 +158,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             repository.insertTransaction(entity)
             repository.updateRecurringRule(rule.copy(lastGeneratedPeriodKey = currentPeriodKey))
         }
+        BalanceWidget.refreshAll(getApplication())
     }
 
     // Filtered transactions for the selected period (Hebrew month, or Gregorian billing cycle)
@@ -527,6 +529,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                 isAnomalous = isAnomalous
             )
             repository.insertTransaction(entity)
+            BalanceWidget.refreshAll(getApplication())
         }
     }
 
@@ -564,6 +567,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     fun deleteTransaction(transaction: TransactionEntity) {
         viewModelScope.launch {
             repository.deleteTransaction(transaction)
+            BalanceWidget.refreshAll(getApplication())
         }
     }
 
