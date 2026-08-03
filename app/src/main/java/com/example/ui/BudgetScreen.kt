@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +43,48 @@ import com.example.data.RecurringRuleEntity
 import com.example.data.ParsedTransaction
 import com.example.ui.theme.ThemeMode
 import java.text.DecimalFormat
+
+// Semantic money colors that stay readable in both light and dark themes
+@Composable
+private fun moneyIncomeColor(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFF81C784) else Color(0xFF2E7D32)
+
+@Composable
+private fun moneyExpenseColor(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFEF9A9A) else Color(0xFFBA1A1A)
+
+@Composable
+private fun moneyWarningColor(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFE2B93B) else Color(0xFF6B4E00)
+
+// Chart colors that stay vivid and readable in both light and dark themes
+@Composable
+private fun chartTeal(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFF4DB6AC) else Color(0xFF00A699)
+
+@Composable
+private fun chartAmber(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFFFD54F) else Color(0xFFF2A900)
+
+@Composable
+private fun chartRed(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFEF9A9A) else Color(0xFFD32F2F)
+
+@Composable
+private fun chartPurple(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFCE93D8) else Color(0xFF8E24AA)
+
+@Composable
+private fun chartOrange(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFFFB74D) else Color(0xFFE65100)
+
+@Composable
+private fun chartSky(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFF4FC3F7) else Color(0xFF0288D1)
+
+@Composable
+private fun chartIndigo(): Color =
+    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFF7986CB) else Color(0xFF3949AB)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,13 +137,13 @@ fun BudgetScreen(
                                 text = "תקציב עברי חכם",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 22.sp,
-                                color = Color(0xFF001E30)
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                             Text(
                                 text = "$selectedMonthName $selectedYearString",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = Color(0xFF006494)
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     },
@@ -118,7 +161,7 @@ fun BudgetScreen(
                                     Icon(
                                         imageVector = Icons.Default.Settings,
                                         contentDescription = "הגדרות נוספות",
-                                        tint = Color(0xFF001E30)
+                                        tint = MaterialTheme.colorScheme.onBackground
                                     )
                                 }
                                 DropdownMenu(
@@ -158,7 +201,7 @@ fun BudgetScreen(
                                 Icon(
                                     imageVector = Icons.Default.Savings,
                                     contentDescription = "הגדרת תקציב חודשי כולל",
-                                    tint = Color(0xFF001E30)
+                                    tint = MaterialTheme.colorScheme.onBackground
                                 )
                             }
                             IconButton(
@@ -168,34 +211,34 @@ fun BudgetScreen(
                                 Icon(
                                     imageVector = Icons.Default.Category,
                                     contentDescription = "ניהול קטגוריות",
-                                    tint = Color(0xFF001E30)
+                                    tint = MaterialTheme.colorScheme.onBackground
                                 )
                             }
                             Box(
                                 modifier = Modifier
                                     .size(38.dp)
-                                    .background(Color(0xFFD1E4FF), shape = RoundedCornerShape(50)),
+                                    .background(MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(50)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = "יה",
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF001D36),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     fontSize = 14.sp
                                 )
                             }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFFFDFBFF)
+                        containerColor = MaterialTheme.colorScheme.background
                     )
                 )
             },
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = { showManualAddDialog = true },
-                    containerColor = Color(0xFF001D36),
-                    contentColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
                         .testTag("add_transaction_fab")
                         .padding(bottom = 16.dp),
@@ -211,14 +254,14 @@ fun BudgetScreen(
                     }
                 }
             },
-            containerColor = Color(0xFFFDFBFF),
+            containerColor = MaterialTheme.colorScheme.background,
             modifier = modifier
         ) { innerPadding ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(Color(0xFFFDFBFF)),
+                    .background(MaterialTheme.colorScheme.background),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -226,7 +269,7 @@ fun BudgetScreen(
                 item {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFEEF0F8)
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         ),
                         shape = RoundedCornerShape(24.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -242,7 +285,7 @@ fun BudgetScreen(
                                 Text(
                                     text = "חודש פעיל (לפי הלוח העברי)",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFF44474E)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -255,28 +298,28 @@ fun BudgetScreen(
                                         text = "$selectedMonthName $selectedYearString",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF001D36)
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                     Icon(
                                         imageVector = Icons.Default.ArrowDropDown,
                                         contentDescription = "בחר חודש",
-                                        tint = Color(0xFF001D36)
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
                             }
 
                             // Quick current date info
                             Surface(
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.surface,
                                 shape = RoundedCornerShape(12.dp),
-                                border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                             ) {
                                 Text(
                                     text = "מתחיל בא'",
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF001D36)
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             }
                         }
@@ -316,12 +359,12 @@ fun BudgetScreen(
                                 .weight(1f)
                                 .height(42.dp)
                                 .background(
-                                    color = if (currentTab == 0) Color(0xFFE1E2EC) else Color.Transparent,
+                                    color = if (currentTab == 0) MaterialTheme.colorScheme.outlineVariant else Color.Transparent,
                                     shape = RoundedCornerShape(50)
                                 )
                                 .border(
                                     width = if (currentTab == 0) 0.dp else 1.dp,
-                                    color = if (currentTab == 0) Color.Transparent else Color(0xFF74777F),
+                                    color = if (currentTab == 0) Color.Transparent else MaterialTheme.colorScheme.outline,
                                     shape = RoundedCornerShape(50)
                                 )
                                 .clickable { currentTab = 0 }
@@ -331,7 +374,7 @@ fun BudgetScreen(
                             Text(
                                 text = "תנועות",
                                 fontWeight = if (currentTab == 0) FontWeight.SemiBold else FontWeight.Medium,
-                                color = if (currentTab == 0) Color(0xFF191C1E) else Color(0xFF44474E),
+                                color = if (currentTab == 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 13.sp
                             )
                         }
@@ -342,12 +385,12 @@ fun BudgetScreen(
                                 .weight(1.3f)
                                 .height(42.dp)
                                 .background(
-                                    color = if (currentTab == 1) Color(0xFFE1E2EC) else Color.Transparent,
+                                    color = if (currentTab == 1) MaterialTheme.colorScheme.outlineVariant else Color.Transparent,
                                     shape = RoundedCornerShape(50)
                                 )
                                 .border(
                                     width = if (currentTab == 1) 0.dp else 1.dp,
-                                    color = if (currentTab == 1) Color.Transparent else Color(0xFF74777F),
+                                    color = if (currentTab == 1) Color.Transparent else MaterialTheme.colorScheme.outline,
                                     shape = RoundedCornerShape(50)
                                 )
                                 .clickable { currentTab = 1 }
@@ -357,7 +400,7 @@ fun BudgetScreen(
                             Text(
                                 text = "תקציב וקטגוריות",
                                 fontWeight = if (currentTab == 1) FontWeight.SemiBold else FontWeight.Medium,
-                                color = if (currentTab == 1) Color(0xFF191C1E) else Color(0xFF44474E),
+                                color = if (currentTab == 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 13.sp
                             )
                         }
@@ -368,12 +411,12 @@ fun BudgetScreen(
                                 .weight(1f)
                                 .height(42.dp)
                                 .background(
-                                    color = if (currentTab == 2) Color(0xFFE1E2EC) else Color.Transparent,
+                                    color = if (currentTab == 2) MaterialTheme.colorScheme.outlineVariant else Color.Transparent,
                                     shape = RoundedCornerShape(50)
                                 )
                                 .border(
                                     width = if (currentTab == 2) 0.dp else 1.dp,
-                                    color = if (currentTab == 2) Color.Transparent else Color(0xFF74777F),
+                                    color = if (currentTab == 2) Color.Transparent else MaterialTheme.colorScheme.outline,
                                     shape = RoundedCornerShape(50)
                                 )
                                 .clickable { currentTab = 2 }
@@ -383,7 +426,7 @@ fun BudgetScreen(
                             Text(
                                 text = "תרשימים",
                                 fontWeight = if (currentTab == 2) FontWeight.SemiBold else FontWeight.Medium,
-                                color = if (currentTab == 2) Color(0xFF191C1E) else Color(0xFF44474E),
+                                color = if (currentTab == 2) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 13.sp
                             )
                         }
@@ -604,7 +647,7 @@ fun BudgetDashboardCard(
 
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFD1E4FF)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         shape = RoundedCornerShape(28.dp),
         modifier = modifier.fillMaxWidth()
     ) {
@@ -622,10 +665,10 @@ fun BudgetDashboardCard(
                     text = if (calendarMode == CalendarMode.HEBREW) "יתרה חודשית עברית" else "יתרה חודשית לועזית",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF001D36)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Surface(
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(50),
                 ) {
                     Text(
@@ -633,7 +676,7 @@ fun BudgetDashboardCard(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF001D36)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
@@ -641,7 +684,7 @@ fun BudgetDashboardCard(
             // Big balance display, with anomalous totals shown large alongside it on the other side
             val balanceSign = if (stats.netBalance >= 0) "" else "-"
             val absoluteBalance = kotlin.math.abs(stats.netBalance)
-            val balanceColor = if (stats.netBalance >= 0) Color(0xFF1B5E20) else Color(0xFFB71C1C)
+            val balanceColor = if (stats.netBalance >= 0) moneyIncomeColor() else moneyExpenseColor()
             val hasAnomalous = stats.anomalousExpenseTotal > 0.0 || stats.anomalousIncomeTotal > 0.0
 
             Row(
@@ -664,13 +707,13 @@ fun BudgetDashboardCard(
                                 text = "הוצאה חריגה",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF6B4E00)
+                                color = moneyWarningColor()
                             )
                             Text(
                                 text = "₪${decFormat.format(stats.anomalousExpenseTotal)}",
                                 fontSize = 26.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6B4E00)
+                                color = moneyWarningColor()
                             )
                         }
                         if (stats.anomalousIncomeTotal > 0.0) {
@@ -678,13 +721,13 @@ fun BudgetDashboardCard(
                                 text = "הכנסה חריגה",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF6B4E00)
+                                color = moneyWarningColor()
                             )
                             Text(
                                 text = "₪${decFormat.format(stats.anomalousIncomeTotal)}",
                                 fontSize = 26.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6B4E00)
+                                color = moneyWarningColor()
                             )
                         }
                     }
@@ -741,7 +784,7 @@ fun BudgetDashboardCard(
                 }
             }
 
-            HorizontalDivider(color = Color(0xFF001D36).copy(alpha = 0.1f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f))
 
             // Income / Expense summary split
             Row(
@@ -756,13 +799,13 @@ fun BudgetDashboardCard(
                         text = "מזומן",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF001D36).copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
                     )
                     Text(
                         text = "${cashSign}₪${decFormat.format(kotlin.math.abs(netCash))}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF001D36)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
 
@@ -771,7 +814,7 @@ fun BudgetDashboardCard(
                     modifier = Modifier
                         .height(36.dp)
                         .width(1.dp)
-                        .background(Color(0xFF001D36).copy(alpha = 0.1f))
+                        .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f))
                         .align(Alignment.CenterVertically)
                 )
 
@@ -787,20 +830,20 @@ fun BudgetDashboardCard(
                         text = "אשראי",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF001D36).copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
                     )
                     Text(
                         text = "${creditSign}₪${decFormat.format(kotlin.math.abs(netCredit))}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF001D36)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
 
             // Overall monthly budget cap progress (across all categories combined)
             if (monthlyBudgetLimit > 0.0) {
-                HorizontalDivider(color = Color(0xFF001D36).copy(alpha = 0.1f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f))
 
                 val usageFraction = (stats.totalExpense / monthlyBudgetLimit).toFloat().coerceIn(0f, 1f)
                 val isOverBudget = stats.totalExpense >= monthlyBudgetLimit
@@ -809,7 +852,7 @@ fun BudgetDashboardCard(
                 val progressColor = when {
                     isOverBudget -> Color(0xFFBA1A1A)
                     isNearBudget -> Color(0xFFE65100)
-                    else -> Color(0xFF006494)
+                    else -> MaterialTheme.colorScheme.primary
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -822,7 +865,7 @@ fun BudgetDashboardCard(
                             text = "תקציב חודשי כולל",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF001D36).copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
                         Text(
                             text = "₪${decFormat.format(stats.totalExpense)} מתוך ₪${decFormat.format(monthlyBudgetLimit)}",
@@ -838,7 +881,7 @@ fun BudgetDashboardCard(
                             .height(8.dp)
                             .clip(RoundedCornerShape(50)),
                         color = progressColor,
-                        trackColor = Color.White.copy(alpha = 0.6f)
+                        trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f)
                     )
                     if (isOverBudget) {
                         Text(
@@ -865,7 +908,7 @@ fun GeminiInputCard(
 ) {
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEEF0F8)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = RoundedCornerShape(24.dp),
         modifier = modifier.fillMaxWidth()
     ) {
@@ -880,20 +923,20 @@ fun GeminiInputCard(
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
                     contentDescription = "ג'מיני פיענוח חכם",
-                    tint = Color(0xFF001D36)
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = "דבר אל ג'מיני בחופשיות ✦",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = Color(0xFF001D36)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
             Text(
                 text = "ספר לג'מיני מה קנית או קיבלת, והוא ימיין זאת מיד לקטגוריה, לאמצעי תשלום, ולסכום הנכון.",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF44474E)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             OutlinedTextField(
@@ -903,7 +946,7 @@ fun GeminiInputCard(
                     Text(
                         "לדוגמה: 'קניתי אוכל בחומוס אליהו ב-45 שקלים באשראי' או 'קיבלתי משכורת 5500 שקלים במזומן'",
                         fontSize = 12.sp,
-                        color = Color(0xFF74777F)
+                        color = MaterialTheme.colorScheme.outline
                     )
                 },
                 modifier = Modifier
@@ -912,12 +955,12 @@ fun GeminiInputCard(
                     .testTag("gemini_input_field"),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                     focusedBorderColor = Color.Transparent,
                     unfocusedBorderColor = Color.Transparent,
-                    focusedTextColor = Color(0xFF191C1E),
-                    unfocusedTextColor = Color(0xFF191C1E)
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 )
             )
 
@@ -931,15 +974,15 @@ fun GeminiInputCard(
                     modifier = Modifier.testTag("parse_gemini_button"),
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF001D36),
-                        contentColor = Color.White,
-                        disabledContainerColor = Color(0xFF001D36).copy(alpha = 0.5f),
-                        disabledContentColor = Color.White.copy(alpha = 0.5f)
+                        containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
+                        disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
                     )
                 ) {
                     if (isParsing) {
                         CircularProgressIndicator(
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(18.dp),
                             strokeWidth = 2.dp
                         )
@@ -958,7 +1001,7 @@ fun GeminiInputCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(2.dp)),
-                    color = Color(0xFF001D36)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
@@ -1003,9 +1046,9 @@ fun TransactionItemRow(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -1035,7 +1078,7 @@ fun TransactionItemRow(
                             text = transaction.title,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF191C1E)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         if (transaction.isAnomalous) {
                             Surface(
@@ -1056,7 +1099,7 @@ fun TransactionItemRow(
                     Text(
                         text = "${transaction.categoryName} • ${if (transaction.paymentType == "CASH") "מזומן" else "אשראי"} • יום ${transaction.hebrewDay} ב${transaction.hebrewMonthName}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF44474E)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -1065,7 +1108,7 @@ fun TransactionItemRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                val amountColor = if (transaction.isExpense) Color(0xFFBA1A1A) else Color(0xFF2E7D32)
+                val amountColor = if (transaction.isExpense) moneyExpenseColor() else moneyIncomeColor()
                 val amountPrefix = if (transaction.isExpense) "-" else "+"
                 
                 Text(
@@ -1118,9 +1161,9 @@ fun CategoryGroupCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -1138,7 +1181,7 @@ fun CategoryGroupCard(
                     Box(
                         modifier = Modifier
                             .size(36.dp)
-                            .background(Color(0xFFEEF0F8), shape = RoundedCornerShape(50)),
+                            .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(50)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(text = emoji, fontSize = 18.sp)
@@ -1149,12 +1192,12 @@ fun CategoryGroupCard(
                             text = category.name,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF001D36)
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
                             text = "תנועות: ${transactions.size}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF44474E)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -1168,7 +1211,7 @@ fun CategoryGroupCard(
                             Text(
                                 text = "הוצאות: ₪${decFormat.format(totalExpense)}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFFBA1A1A),
+                                color = moneyExpenseColor(),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -1176,7 +1219,7 @@ fun CategoryGroupCard(
                             Text(
                                 text = "הכנסות: ₪${decFormat.format(totalIncome)}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF2E7D32),
+                                color = moneyIncomeColor(),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -1184,7 +1227,7 @@ fun CategoryGroupCard(
                             Text(
                                 text = "₪0.00",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF44474E).copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                             )
                         }
                     }
@@ -1192,7 +1235,7 @@ fun CategoryGroupCard(
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                         contentDescription = null,
-                        tint = Color(0xFF001D36)
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
@@ -1201,7 +1244,7 @@ fun CategoryGroupCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFF8F9FF))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -1215,14 +1258,14 @@ fun CategoryGroupCard(
                         val progressColor = when {
                             isOver100 -> Color(0xFFBA1A1A) // Red
                             isOver80 -> Color(0xFFD68A00) // Amber/Orange
-                            else -> Color(0xFF006494) // Blue
+                            else -> MaterialTheme.colorScheme.primary // Blue
                         }
                         
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.White, RoundedCornerShape(12.dp))
-                                .border(BorderStroke(1.dp, Color(0xFFE1E2EC)), RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(12.dp))
                                 .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
@@ -1242,7 +1285,7 @@ fun CategoryGroupCard(
                                         text = "תקציב חודשי: ₪${decFormat.format(budget)}",
                                         fontWeight = FontWeight.Bold,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0xFF001D36)
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
                                 
@@ -1261,7 +1304,7 @@ fun CategoryGroupCard(
                                     .height(8.dp)
                                     .clip(RoundedCornerShape(50)),
                                 color = progressColor,
-                                trackColor = Color(0xFFEEF0F8)
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
                             )
                             
                             Row(
@@ -1288,13 +1331,13 @@ fun CategoryGroupCard(
                                     Icon(
                                         imageVector = Icons.Default.Edit,
                                         contentDescription = "ערוך תקציב",
-                                        tint = Color(0xFF006494),
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Text(
                                         text = "ערוך",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0xFF006494),
+                                        color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -1305,8 +1348,8 @@ fun CategoryGroupCard(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.White, RoundedCornerShape(12.dp))
-                                .border(BorderStroke(1.dp, Color(0xFFE1E2EC)), RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(12.dp))
                                 .clickable { onEditBudget(category) }
                                 .padding(12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1316,19 +1359,19 @@ fun CategoryGroupCard(
                                 Icon(
                                     imageVector = Icons.Default.Add,
                                     contentDescription = null,
-                                    tint = Color(0xFF006494),
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
                                     text = "לא הוגדר תקציב חודשי לקטגוריה זו",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFF44474E)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             Text(
                                 text = "הגדר תקציב",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF006494),
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -1340,7 +1383,7 @@ fun CategoryGroupCard(
                         Text(
                             text = "אין הוצאות או הכנסות בקטגוריה זו בחודש הנבחר.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF44474E).copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 12.dp),
@@ -1351,9 +1394,9 @@ fun CategoryGroupCard(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.White, RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
                                     .border(
-                                        BorderStroke(1.dp, Color(0xFFE1E2EC)),
+                                        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                         RoundedCornerShape(12.dp)
                                     )
                                     .padding(12.dp),
@@ -1386,12 +1429,12 @@ fun CategoryGroupCard(
                                             text = tx.title,
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFF191C1E)
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
                                             text = "יום ${tx.hebrewDay} ב${tx.hebrewMonthName}",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = Color(0xFF44474E)
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
@@ -1400,7 +1443,7 @@ fun CategoryGroupCard(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    val amountColor = if (tx.isExpense) Color(0xFFBA1A1A) else Color(0xFF2E7D32)
+                                    val amountColor = if (tx.isExpense) moneyExpenseColor() else moneyIncomeColor()
                                     Text(
                                         text = "${if (tx.isExpense) "-" else "+"}₪${decFormat.format(tx.amount)}",
                                         style = MaterialTheme.typography.bodyMedium,
@@ -1478,8 +1521,8 @@ fun MonthSelectorDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFE1E2EC)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -1492,12 +1535,12 @@ fun MonthSelectorDialog(
                     text = "בחר חודש עברי",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF001D36),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
 
-                HorizontalDivider(color = Color(0xFFE1E2EC))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1506,15 +1549,15 @@ fun MonthSelectorDialog(
                     items(options) { option ->
                         val isSelected = option.monthIndex == selectedMonthIndex && option.year == selectedYear
                         val cardColors = if (isSelected) {
-                            CardDefaults.cardColors(containerColor = Color(0xFFEEF0F8))
+                            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                         } else {
-                            CardDefaults.cardColors(containerColor = Color.White)
+                            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         }
 
                         Card(
                             colors = cardColors,
                             shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, if (isSelected) Color(0xFF001D36) else Color(0xFFE1E2EC)),
+                            border = BorderStroke(1.dp, if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.outlineVariant),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onSelect(option) }
@@ -1529,13 +1572,13 @@ fun MonthSelectorDialog(
                                 Text(
                                     text = option.getDisplayName(),
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) Color(0xFF001D36) else Color(0xFF191C1E)
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                                 )
                                 if (isSelected) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = "נבחר",
-                                        tint = Color(0xFF001D36),
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -1550,7 +1593,7 @@ fun MonthSelectorDialog(
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                     ) {
                         Text("ביטול", fontWeight = FontWeight.SemiBold)
                     }
@@ -1577,8 +1620,8 @@ fun GeminiDraftConfirmDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFE1E2EC)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -1597,47 +1640,47 @@ fun GeminiDraftConfirmDialog(
                     Icon(
                         imageVector = Icons.Default.AutoAwesome,
                         contentDescription = null,
-                        tint = Color(0xFF001D36)
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
                         text = "פיענוח ג'מיני מוכן! ✦",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF001D36)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
 
-                HorizontalDivider(color = Color(0xFFE1E2EC))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 // Information Grid
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Title
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("תיאור שנמצא:", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF44474E))
-                        Text(draft.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF191C1E))
+                        Text("תיאור שנמצא:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(draft.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                     }
 
                     // Amount
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("סכום:", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF44474E))
-                        Text("₪${decFormat.format(draft.amount)}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = if (draft.isExpense) Color(0xFFBA1A1A) else Color(0xFF2E7D32))
+                        Text("סכום:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("₪${decFormat.format(draft.amount)}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = if (draft.isExpense) moneyExpenseColor() else moneyIncomeColor())
                     }
 
                     // Transaction Type
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("סוג פעולה:", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF44474E))
-                        Text(if (draft.isExpense) "הוצאה" else "הכנסה", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF191C1E))
+                        Text("סוג פעולה:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(if (draft.isExpense) "הוצאה" else "הכנסה", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                     }
 
                     // Payment Type
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("אמצעי תשלום:", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF44474E))
-                        Text(if (draft.paymentType == "CASH") "מזומן" else "אשראי", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF191C1E))
+                        Text("אמצעי תשלום:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(if (draft.paymentType == "CASH") "מזומן" else "אשראי", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                     }
 
                     // Category Selection Grid
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("קטגוריה:", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF44474E), fontWeight = FontWeight.SemiBold)
+                        Text("קטגוריה:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
                         Spacer(modifier = Modifier.height(6.dp))
 
                         if (isNewCategory) {
@@ -1660,8 +1703,8 @@ fun GeminiDraftConfirmDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 160.dp, max = 260.dp)
-                                .border(1.dp, Color(0xFFE1E2EC), RoundedCornerShape(12.dp))
-                                .background(Color(0xFFF8F9FF), RoundedCornerShape(12.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                                 .padding(8.dp)
                         ) {
                             LazyVerticalGrid(
@@ -1676,7 +1719,7 @@ fun GeminiDraftConfirmDialog(
                                         val isSelected = selectedCategory == draft.categoryName
                                         Card(
                                             shape = RoundedCornerShape(10.dp),
-                                            colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF001D36) else Color.White),
+                                            colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.surface),
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .heightIn(min = 56.dp)
@@ -1696,14 +1739,14 @@ fun GeminiDraftConfirmDialog(
                                                         text = draft.categoryName,
                                                         style = MaterialTheme.typography.bodyMedium,
                                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                        color = if (isSelected) Color.White else Color(0xFF001D36),
+                                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
                                                         maxLines = 2,
                                                         overflow = TextOverflow.Ellipsis
                                                     )
                                                     Text(
                                                         text = "חדשה",
                                                         style = MaterialTheme.typography.labelSmall,
-                                                        color = if (isSelected) Color.White.copy(alpha = 0.8f) else Color(0xFF1A3E7C)
+                                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else Color(0xFF1A3E7C)
                                                     )
                                                 }
                                             }
@@ -1724,8 +1767,8 @@ fun GeminiDraftConfirmDialog(
                                         "הכנסות" -> "📈"
                                         else -> "💰"
                                     }
-                                    val backgroundColor = if (isSelected) Color(0xFF001D36) else Color.White
-                                    val contentColor = if (isSelected) Color.White else Color(0xFF001D36)
+                                    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.surface
+                                    val contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer
                                     
                                     Card(
                                         shape = RoundedCornerShape(10.dp),
@@ -1734,7 +1777,7 @@ fun GeminiDraftConfirmDialog(
                                             .fillMaxWidth()
                                             .heightIn(min = 56.dp)
                                             .clickable { selectedCategory = category.name },
-                                        border = if (isSelected) null else BorderStroke(1.dp, Color(0xFFE1E2EC))
+                                        border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                                     ) {
                                         Row(
                                             modifier = Modifier
@@ -1767,7 +1810,7 @@ fun GeminiDraftConfirmDialog(
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E)),
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
                         modifier = Modifier.testTag("dismiss_draft_btn")
                     ) {
                         Text("ביטול", fontWeight = FontWeight.SemiBold)
@@ -1778,7 +1821,7 @@ fun GeminiDraftConfirmDialog(
                             onConfirm(selectedCategory)
                             onDismiss()
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001D36), contentColor = Color.White),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer, contentColor = MaterialTheme.colorScheme.onPrimary),
                         shape = RoundedCornerShape(50),
                         modifier = Modifier.testTag("confirm_draft_button")
                     ) {
@@ -1810,8 +1853,8 @@ fun ManualAddTransactionDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFE1E2EC)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -1827,18 +1870,18 @@ fun ManualAddTransactionDialog(
                     text = "הוספת תנועה ידנית",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF001D36),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
 
-                HorizontalDivider(color = Color(0xFFE1E2EC))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 // Custom Segmented Toggle for Expense/Income
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFEEF0F8), shape = RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(50))
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -1847,7 +1890,7 @@ fun ManualAddTransactionDialog(
                             .weight(1f)
                             .height(36.dp)
                             .background(
-                                color = if (isExpense) Color.White else Color.Transparent,
+                                color = if (isExpense) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
                                 shape = RoundedCornerShape(50)
                             )
                             .clickable {
@@ -1861,7 +1904,7 @@ fun ManualAddTransactionDialog(
                         Text(
                             text = "הוצאה",
                             fontWeight = FontWeight.Bold,
-                            color = if (isExpense) Color(0xFFBA1A1A) else Color(0xFF44474E),
+                            color = if (isExpense) moneyExpenseColor() else MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp
                         )
                     }
@@ -1870,7 +1913,7 @@ fun ManualAddTransactionDialog(
                             .weight(1f)
                             .height(36.dp)
                             .background(
-                                color = if (!isExpense) Color.White else Color.Transparent,
+                                color = if (!isExpense) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
                                 shape = RoundedCornerShape(50)
                             )
                             .clickable {
@@ -1884,7 +1927,7 @@ fun ManualAddTransactionDialog(
                         Text(
                             text = "הכנסה",
                             fontWeight = FontWeight.Bold,
-                            color = if (!isExpense) Color(0xFF2E7D32) else Color(0xFF44474E),
+                            color = if (!isExpense) moneyIncomeColor() else MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp
                         )
                     }
@@ -1900,8 +1943,8 @@ fun ManualAddTransactionDialog(
                         .testTag("manual_title_input"),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF001D36),
-                        unfocusedBorderColor = Color(0xFFC4C6D0)
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                     )
                 )
 
@@ -1916,8 +1959,8 @@ fun ManualAddTransactionDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF001D36),
-                        unfocusedBorderColor = Color(0xFFC4C6D0)
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                     )
                 )
 
@@ -1956,7 +1999,7 @@ fun ManualAddTransactionDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("אמצעי תשלום:", fontWeight = FontWeight.SemiBold, color = Color(0xFF001D36))
+                    Text("אמצעי תשלום:", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         FilterChip(
                             selected = paymentType == "CREDIT",
@@ -1975,15 +2018,15 @@ fun ManualAddTransactionDialog(
 
                 // Category Selection Grid
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text("בחר קטגוריה:", fontWeight = FontWeight.SemiBold, color = Color(0xFF001D36))
+                    Text("בחר קטגוריה:", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     Spacer(modifier = Modifier.height(6.dp))
                     
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 160.dp, max = 260.dp)
-                            .border(1.dp, Color(0xFFE1E2EC), RoundedCornerShape(12.dp))
-                            .background(Color(0xFFF8F9FF), RoundedCornerShape(12.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                             .padding(8.dp)
                     ) {
                         LazyVerticalGrid(
@@ -2005,8 +2048,8 @@ fun ManualAddTransactionDialog(
                                     "הכנסות" -> "📈"
                                     else -> "💰"
                                 }
-                                val backgroundColor = if (isSelected) Color(0xFF001D36) else Color.White
-                                val contentColor = if (isSelected) Color.White else Color(0xFF001D36)
+                                val backgroundColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.surface
+                                val contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer
                                 
                                 Card(
                                     shape = RoundedCornerShape(10.dp),
@@ -2015,7 +2058,7 @@ fun ManualAddTransactionDialog(
                                         .fillMaxWidth()
                                         .heightIn(min = 56.dp)
                                         .clickable { selectedCategoryName = category.name },
-                                    border = if (isSelected) null else BorderStroke(1.dp, Color(0xFFE1E2EC))
+                                    border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                                 ) {
                                     Row(
                                         modifier = Modifier
@@ -2048,7 +2091,7 @@ fun ManualAddTransactionDialog(
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E)),
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
                         modifier = Modifier.testTag("manual_dismiss_btn")
                     ) {
                         Text("ביטול", fontWeight = FontWeight.SemiBold)
@@ -2062,7 +2105,7 @@ fun ManualAddTransactionDialog(
                             }
                         },
                         enabled = title.isNotBlank() && (amountStr.toDoubleOrNull() ?: 0.0) > 0.0,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001D36), contentColor = Color.White),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer, contentColor = MaterialTheme.colorScheme.onPrimary),
                         shape = RoundedCornerShape(50),
                         modifier = Modifier.testTag("manual_save_btn")
                     ) {
@@ -2088,8 +2131,8 @@ fun CategoryManagerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFE1E2EC)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -2102,12 +2145,12 @@ fun CategoryManagerDialog(
                     text = "ניהול קטגוריות",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF001D36),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
 
-                HorizontalDivider(color = Color(0xFFE1E2EC))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 // Add Category Input Box
                 Row(
@@ -2124,8 +2167,8 @@ fun CategoryManagerDialog(
                             .testTag("new_category_input"),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF001D36),
-                            unfocusedBorderColor = Color(0xFFC4C6D0)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                         )
                     )
                     Button(
@@ -2136,7 +2179,7 @@ fun CategoryManagerDialog(
                             }
                         },
                         enabled = newCategoryName.isNotBlank(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001D36), contentColor = Color.White),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer, contentColor = MaterialTheme.colorScheme.onPrimary),
                         shape = RoundedCornerShape(50),
                         modifier = Modifier.testTag("add_category_button")
                     ) {
@@ -2150,7 +2193,7 @@ fun CategoryManagerDialog(
                     text = "קטגוריות קיימות:",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF001D36)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
 
                 LazyColumn(
@@ -2174,8 +2217,8 @@ fun CategoryManagerDialog(
 
                         Card(
                             shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE1E2EC)),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FF)),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -2193,13 +2236,13 @@ fun CategoryManagerDialog(
                                     Text(
                                         text = category.name,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = Color(0xFF191C1E)
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     if (category.isSystem) {
                                         Box(
                                             modifier = Modifier
                                                 .background(
-                                                    color = Color(0xFFEEF0F8),
+                                                    color = MaterialTheme.colorScheme.surfaceVariant,
                                                     shape = RoundedCornerShape(6.dp)
                                                 )
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
@@ -2207,7 +2250,7 @@ fun CategoryManagerDialog(
                                             Text(
                                                 text = "מובנה",
                                                 fontSize = 9.sp,
-                                                color = Color(0xFF001D36),
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
@@ -2238,7 +2281,7 @@ fun CategoryManagerDialog(
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                     ) {
                         Text("סגור", fontWeight = FontWeight.Bold)
                     }
@@ -2262,7 +2305,7 @@ fun EditCategoryBudgetDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(24.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
@@ -2276,7 +2319,7 @@ fun EditCategoryBudgetDialog(
                     text = "הגדרת תקציב ל-${category.name}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF001D36)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
 
                 OutlinedTextField(
@@ -2295,8 +2338,8 @@ fun EditCategoryBudgetDialog(
                     isError = isError,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF006494),
-                        focusedLabelColor = Color(0xFF006494)
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -2314,7 +2357,7 @@ fun EditCategoryBudgetDialog(
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                     ) {
                         Text("ביטול", fontWeight = FontWeight.Bold)
                     }
@@ -2328,9 +2371,9 @@ fun EditCategoryBudgetDialog(
                                 isError = true
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("שמור תקציב", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("שמור תקציב", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -2352,7 +2395,7 @@ fun EditMonthlyBudgetDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(24.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
@@ -2366,13 +2409,13 @@ fun EditMonthlyBudgetDialog(
                     text = "תקציב חודשי כולל",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF001D36)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
 
                 Text(
                     text = "גג הוצאה כולל לחודש, על כל הקטגוריות יחד. השאר ריק כדי לבטל את התקרה.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF44474E)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 OutlinedTextField(
@@ -2391,8 +2434,8 @@ fun EditMonthlyBudgetDialog(
                     isError = isError,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF006494),
-                        focusedLabelColor = Color(0xFF006494)
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -2410,7 +2453,7 @@ fun EditMonthlyBudgetDialog(
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                     ) {
                         Text("ביטול", fontWeight = FontWeight.Bold)
                     }
@@ -2424,9 +2467,9 @@ fun EditMonthlyBudgetDialog(
                                 isError = true
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("שמור תקציב", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("שמור תקציב", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -2450,7 +2493,7 @@ fun CalendarModeDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(24.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
@@ -2464,18 +2507,18 @@ fun CalendarModeDialog(
                     text = "מצב תצוגת חודש",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF001D36)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = "בחר האם התצוגה והחישובים (יתרה, תקציב, קטגוריות) יתבססו על החודש העברי או על מחזור חודש לועזי (שימושי בשביל התאמה למחזור חיוב האשראי).",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF44474E)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFEEF0F8), RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -2483,21 +2526,21 @@ fun CalendarModeDialog(
                         modifier = Modifier
                             .weight(1f)
                             .height(40.dp)
-                            .background(if (selectedMode == CalendarMode.HEBREW) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .background(if (selectedMode == CalendarMode.HEBREW) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, RoundedCornerShape(50))
                             .clickable { selectedMode = CalendarMode.HEBREW },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("חודש עברי", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                        Text("חודש עברי", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 13.sp)
                     }
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .height(40.dp)
-                            .background(if (selectedMode == CalendarMode.GREGORIAN) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .background(if (selectedMode == CalendarMode.GREGORIAN) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, RoundedCornerShape(50))
                             .clickable { selectedMode = CalendarMode.GREGORIAN },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("חודש לועזי", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                        Text("חודש לועזי", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 13.sp)
                     }
                 }
 
@@ -2512,14 +2555,14 @@ fun CalendarModeDialog(
                         isError = isError,
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF006494),
-                            focusedLabelColor = Color(0xFF006494)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
                     Text(
                         text = "ימים לפני התאריך הזה בכל חודש ייחשבו כשייכים לחודש הקודם - למשל אם החיוב מתחיל ב-10, אז ה-1 עד ה-9 בחודש שייכים למחזור של החודש הקודם.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF44474E)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (isError) {
                         Text(
@@ -2536,7 +2579,7 @@ fun CalendarModeDialog(
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                     ) {
                         Text("ביטול", fontWeight = FontWeight.Bold)
                     }
@@ -2554,9 +2597,9 @@ fun CalendarModeDialog(
                                 }
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("שמור", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("שמור", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -2577,7 +2620,7 @@ fun ThemeModeDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(24.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
@@ -2591,18 +2634,18 @@ fun ThemeModeDialog(
                     text = "מצב כהה / בהיר",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF001D36)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = "בחר כיצד האפליקציה תוצג: תמיד בהיר, תמיד כהה, או בהתאמה להגדרות המערכת של הטלפון.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF44474E)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFEEF0F8), RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -2610,31 +2653,31 @@ fun ThemeModeDialog(
                         modifier = Modifier
                             .weight(1f)
                             .height(40.dp)
-                            .background(if (selectedMode == ThemeMode.LIGHT) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .background(if (selectedMode == ThemeMode.LIGHT) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, RoundedCornerShape(50))
                             .clickable { selectedMode = ThemeMode.LIGHT },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("בהיר", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                        Text("בהיר", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 13.sp)
                     }
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .height(40.dp)
-                            .background(if (selectedMode == ThemeMode.DARK) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .background(if (selectedMode == ThemeMode.DARK) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, RoundedCornerShape(50))
                             .clickable { selectedMode = ThemeMode.DARK },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("כהה", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                        Text("כהה", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 13.sp)
                     }
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .height(40.dp)
-                            .background(if (selectedMode == ThemeMode.SYSTEM) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .background(if (selectedMode == ThemeMode.SYSTEM) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, RoundedCornerShape(50))
                             .clickable { selectedMode = ThemeMode.SYSTEM },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("מערכת", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                        Text("מערכת", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 13.sp)
                     }
                 }
 
@@ -2644,16 +2687,16 @@ fun ThemeModeDialog(
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                     ) {
                         Text("ביטול", fontWeight = FontWeight.Bold)
                     }
 
                     Button(
                         onClick = { onSave(selectedMode) },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("שמור", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("שמור", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -2681,8 +2724,8 @@ fun RecurringRuleManagerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFE1E2EC)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -2698,20 +2741,20 @@ fun RecurringRuleManagerDialog(
                     text = "הכנסות/הוצאות קבועות",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF001D36)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = "רשומות שנוצרות אוטומטית כל חודש קלנדרי, בתאריך שתבחר.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF44474E)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                HorizontalDivider(color = Color(0xFFE1E2EC))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 if (rules.isEmpty()) {
                     Text(
                         text = "אין עדיין רשומות קבועות",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF44474E)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -2728,11 +2771,11 @@ fun RecurringRuleManagerDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(rule.title, fontWeight = FontWeight.Bold, color = Color(0xFF001D36))
+                                    Text(rule.title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                     Text(
                                         text = "${rule.categoryName} • ₪${rule.amount} • כל ${rule.dayOfMonth} בחודש",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color(0xFF44474E)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                                 Switch(
@@ -2747,17 +2790,17 @@ fun RecurringRuleManagerDialog(
                     }
                 }
 
-                HorizontalDivider(color = Color(0xFFE1E2EC))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 if (!showAddForm) {
                     Button(
                         onClick = { showAddForm = true },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001D36))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
+                        Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("הוסף רשומה קבועה", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("הוסף רשומה קבועה", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                     }
                 } else {
                     OutlinedTextField(
@@ -2767,8 +2810,8 @@ fun RecurringRuleManagerDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF006494),
-                            focusedLabelColor = Color(0xFF006494)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
                     OutlinedTextField(
@@ -2779,8 +2822,8 @@ fun RecurringRuleManagerDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF006494),
-                            focusedLabelColor = Color(0xFF006494)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
                     OutlinedTextField(
@@ -2791,15 +2834,15 @@ fun RecurringRuleManagerDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF006494),
-                            focusedLabelColor = Color(0xFF006494)
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary
                         )
                     )
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFEEF0F8), RoundedCornerShape(50))
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
                             .padding(4.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
@@ -2807,14 +2850,14 @@ fun RecurringRuleManagerDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(36.dp)
-                                .background(if (isExpense) Color.White else Color.Transparent, RoundedCornerShape(50))
+                                .background(if (isExpense) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, RoundedCornerShape(50))
                                 .clickable { isExpense = true },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "הוצאה קבועה",
                                 fontWeight = FontWeight.Bold,
-                                color = if (isExpense) Color(0xFFBA1A1A) else Color(0xFF44474E),
+                                color = if (isExpense) moneyExpenseColor() else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 13.sp
                             )
                         }
@@ -2822,14 +2865,14 @@ fun RecurringRuleManagerDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(36.dp)
-                                .background(if (!isExpense) Color.White else Color.Transparent, RoundedCornerShape(50))
+                                .background(if (!isExpense) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, RoundedCornerShape(50))
                                 .clickable { isExpense = false },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "הכנסה קבועה",
                                 fontWeight = FontWeight.Bold,
-                                color = if (!isExpense) Color(0xFF2E7D32) else Color(0xFF44474E),
+                                color = if (!isExpense) moneyIncomeColor() else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 13.sp
                             )
                         }
@@ -2851,13 +2894,13 @@ fun RecurringRuleManagerDialog(
                         )
                     }
 
-                    Text("קטגוריה:", fontWeight = FontWeight.SemiBold, color = Color(0xFF001D36))
+                    Text("קטגוריה:", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 120.dp, max = 180.dp)
-                            .border(1.dp, Color(0xFFE1E2EC), RoundedCornerShape(12.dp))
-                            .background(Color(0xFFF8F9FF), RoundedCornerShape(12.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                             .padding(8.dp)
                     ) {
                         LazyVerticalGrid(
@@ -2870,12 +2913,12 @@ fun RecurringRuleManagerDialog(
                                 val isSelected = category.name == selectedCategoryName
                                 Card(
                                     shape = RoundedCornerShape(10.dp),
-                                    colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF001D36) else Color.White),
+                                    colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.surface),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .heightIn(min = 48.dp)
                                         .clickable { selectedCategoryName = category.name },
-                                    border = if (isSelected) null else BorderStroke(1.dp, Color(0xFFE1E2EC))
+                                    border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                                 ) {
                                     Box(
                                         modifier = Modifier.padding(8.dp).fillMaxWidth(),
@@ -2884,7 +2927,7 @@ fun RecurringRuleManagerDialog(
                                         Text(
                                             text = category.name,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = if (isSelected) Color.White else Color(0xFF001D36),
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis
                                         )
@@ -2900,7 +2943,7 @@ fun RecurringRuleManagerDialog(
                     ) {
                         TextButton(
                             onClick = { showAddForm = false },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                         ) {
                             Text("ביטול", fontWeight = FontWeight.Bold)
                         }
@@ -2916,9 +2959,9 @@ fun RecurringRuleManagerDialog(
                                     showAddForm = false
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("שמור", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text("שמור", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -2926,7 +2969,7 @@ fun RecurringRuleManagerDialog(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                     ) {
                         Text("סגור", fontWeight = FontWeight.Bold)
                     }
@@ -2948,9 +2991,9 @@ fun DonutChartCard(
     
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
@@ -2960,7 +3003,7 @@ fun DonutChartCard(
                 text = "פילוח הוצאות לפי קטגוריות",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF001D36)
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             
             if (totalExpense == 0.0) {
@@ -2974,13 +3017,13 @@ fun DonutChartCard(
                         Icon(
                             imageVector = Icons.Default.PieChart,
                             contentDescription = null,
-                            tint = Color(0xFFC4C6D0),
+                            tint = MaterialTheme.colorScheme.outlineVariant,
                             modifier = Modifier.size(48.dp)
                         )
                         Text(
                             text = "אין הוצאות מתועדות לחודש זה.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFF44474E)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -2992,15 +3035,15 @@ fun DonutChartCard(
                     .sortedByDescending { it.second }
                 
                 val chartColors = listOf(
-                    Color(0xFF006494), // Deep Blue
-                    Color(0xFF00A699), // Teal
-                    Color(0xFF2E7D32), // Forest Green
-                    Color(0xFFF2A900), // Amber
-                    Color(0xFFD32F2F), // Red
-                    Color(0xFF8E24AA), // Purple
-                    Color(0xFFE65100), // Dark Orange
-                    Color(0xFF0288D1), // Sky Blue
-                    Color(0xFF3949AB)  // Indigo
+                    MaterialTheme.colorScheme.primary, // Deep Blue
+                    chartTeal(), // Teal
+                    moneyIncomeColor(), // Forest Green
+                    chartAmber(), // Amber
+                    chartRed(), // Red
+                    chartPurple(), // Purple
+                    chartOrange(), // Dark Orange
+                    chartSky(), // Sky Blue
+                    chartIndigo()  // Indigo
                 )
                 
                 Row(
@@ -3039,14 +3082,14 @@ fun DonutChartCard(
                             Text(
                                 text = "סה\"כ הוצאות",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF44474E),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 text = "₪${decFormat.format(totalExpense)}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF001D36)
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
@@ -3072,12 +3115,12 @@ fun DonutChartCard(
                                         text = "$name ($pct%)",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF191C1E)
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         text = "₪${decFormat.format(amt)}",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color(0xFF44474E)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -3099,12 +3142,12 @@ fun DonutChartCard(
                                         text = "אחר ($otherPct%)",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF191C1E)
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         text = "₪${decFormat.format(otherSum)}",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color(0xFF44474E)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -3125,9 +3168,9 @@ fun ForecastCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
@@ -3137,20 +3180,20 @@ fun ForecastCard(
                 text = "תחזית לסוף התקופה",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF001D36)
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
 
             if (!forecast.hasData) {
                 Text(
                     text = "התחזית זמינה רק עבור התקופה הנוכחית שרצה כרגע. עברו לתקופה הנוכחית כדי לראותה.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF44474E)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Text(
                     text = "יום ${forecast.daysElapsed} מתוך ${forecast.totalDaysInPeriod} בתקופה",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF44474E)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 LinearProgressIndicator(
@@ -3163,7 +3206,7 @@ fun ForecastCard(
                         .height(8.dp)
                         .clip(RoundedCornerShape(50)),
                     color = Color(0xFF6750A4),
-                    trackColor = Color(0xFFF0F0F5)
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
 
                 Row(
@@ -3171,26 +3214,26 @@ fun ForecastCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text("הוצא עד כה", style = MaterialTheme.typography.labelMedium, color = Color(0xFF44474E))
+                        Text("הוצא עד כה", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             text = "₪${decFormat.format(forecast.actualExpenseSoFar)}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF001D36)
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("קצב יומי ממוצע", style = MaterialTheme.typography.labelMedium, color = Color(0xFF44474E))
+                        Text("קצב יומי ממוצע", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             text = "₪${decFormat.format(forecast.dailyRate)} ליום",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF001D36)
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
 
-                HorizontalDivider(color = Color(0xFFE1E2EC))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -3201,7 +3244,7 @@ fun ForecastCard(
                         text = if (forecast.hasRecurringIncome) "יתרה חזויה בסוף התקופה" else "תחזית הוצאה לסוף התקופה",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF001D36)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     val displayValue = if (forecast.hasRecurringIncome) {
                         forecast.projectedBalance
@@ -3212,7 +3255,7 @@ fun ForecastCard(
                         text = "₪${decFormat.format(displayValue)}",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = if (displayValue >= 0) Color(0xFF1B5E20) else Color(0xFFB71C1C)
+                        color = if (displayValue >= 0) moneyIncomeColor() else moneyExpenseColor()
                     )
                 }
 
@@ -3220,7 +3263,7 @@ fun ForecastCard(
                     Text(
                         text = "כולל הכנסה חזויה של ₪${decFormat.format(forecast.projectedIncome)} מול הוצאה חזויה של ₪${decFormat.format(forecast.projectedExpense)}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF44474E)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -3239,17 +3282,17 @@ fun CashCreditBreakdownCard(
     data class BarRow(val label: String, val amount: Double, val color: Color)
 
     val rows = listOf(
-        BarRow("הכנסות מזומן", stats.cashIncome, Color(0xFF2E7D32)),
-        BarRow("הוצאות מזומן", stats.cashExpense, Color(0xFFB71C1C)),
-        BarRow("הכנסות אשראי", stats.creditIncome, Color(0xFF1565C0)),
-        BarRow("הוצאות אשראי", stats.creditExpense, Color(0xFFEF6C00))
+        BarRow("הכנסות מזומן", stats.cashIncome, moneyIncomeColor()),
+        BarRow("הוצאות מזומן", stats.cashExpense, moneyExpenseColor()),
+        BarRow("הכנסות אשראי", stats.creditIncome, chartSky()),
+        BarRow("הוצאות אשראי", stats.creditExpense, chartOrange())
     )
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
@@ -3259,7 +3302,7 @@ fun CashCreditBreakdownCard(
                 text = "פירוט מזומן מול אשראי",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF001D36)
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
 
             rows.forEach { row ->
@@ -3273,7 +3316,7 @@ fun CashCreditBreakdownCard(
                             text = row.label,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF001D36)
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
                             text = "₪${decFormat.format(row.amount)}",
@@ -3289,33 +3332,33 @@ fun CashCreditBreakdownCard(
                             .height(10.dp)
                             .clip(RoundedCornerShape(50)),
                         color = row.color,
-                        trackColor = Color(0xFFF0F0F5)
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
             }
 
-            HorizontalDivider(color = Color(0xFFE1E2EC))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("סה\"כ מזומן", style = MaterialTheme.typography.labelMedium, color = Color(0xFF44474E))
+                    Text("סה\"כ מזומן", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = "₪${decFormat.format(stats.cashIncome - stats.cashExpense)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (stats.cashIncome - stats.cashExpense >= 0) Color(0xFF1B5E20) else Color(0xFFB71C1C)
+                        color = if (stats.cashIncome - stats.cashExpense >= 0) moneyIncomeColor() else moneyExpenseColor()
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("סה\"כ אשראי", style = MaterialTheme.typography.labelMedium, color = Color(0xFF44474E))
+                    Text("סה\"כ אשראי", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = "₪${decFormat.format(stats.creditIncome - stats.creditExpense)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (stats.creditIncome - stats.creditExpense >= 0) Color(0xFF1B5E20) else Color(0xFFB71C1C)
+                        color = if (stats.creditIncome - stats.creditExpense >= 0) moneyIncomeColor() else moneyExpenseColor()
                     )
                 }
             }
@@ -3353,9 +3396,9 @@ fun BarChartCard(
     
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color(0xFFE1E2EC))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
@@ -3365,7 +3408,7 @@ fun BarChartCard(
                 text = "השוואת הכנסות מול הוצאות לאורך זמן",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF001D36)
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             
             if (monthlyData.isEmpty()) {
@@ -3379,13 +3422,13 @@ fun BarChartCard(
                         Icon(
                             imageVector = Icons.Default.BarChart,
                             contentDescription = null,
-                            tint = Color(0xFFC4C6D0),
+                            tint = MaterialTheme.colorScheme.outlineVariant,
                             modifier = Modifier.size(48.dp)
                         )
                         Text(
                             text = "אין מספיק נתונים להשוואה חודשית.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFF44474E)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -3402,17 +3445,17 @@ fun BarChartCard(
                         Box(
                             modifier = Modifier
                                 .size(12.dp)
-                                .background(Color(0xFF2E7D32), RoundedCornerShape(3.dp))
+                                .background(moneyIncomeColor(), RoundedCornerShape(3.dp))
                         )
-                        Text("הכנסות", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF191C1E))
+                        Text("הכנסות", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     }
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Box(
                             modifier = Modifier
                                 .size(12.dp)
-                                .background(Color(0xFFBA1A1A), RoundedCornerShape(3.dp))
+                                .background(moneyExpenseColor(), RoundedCornerShape(3.dp))
                         )
-                        Text("הוצאות", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF191C1E))
+                        Text("הוצאות", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
                 
@@ -3444,14 +3487,14 @@ fun BarChartCard(
                                     modifier = Modifier
                                         .width(18.dp)
                                         .fillMaxHeight(incomeHeightFraction)
-                                        .background(Color(0xFF2E7D32), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                        .background(moneyIncomeColor(), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                                 )
                                 // Expense Bar
                                 Box(
                                     modifier = Modifier
                                         .width(18.dp)
                                         .fillMaxHeight(expenseHeightFraction)
-                                        .background(Color(0xFFBA1A1A), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                        .background(moneyExpenseColor(), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                                 )
                             }
                             
@@ -3461,13 +3504,13 @@ fun BarChartCard(
                                 text = month.monthName,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF001D36),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 maxLines = 1
                             )
                             Text(
                                 text = month.yearString,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF44474E),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1
                             )
                         }
