@@ -1,12 +1,13 @@
 package com.example.widget
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.text.FontWeight
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.clickable
@@ -43,7 +44,7 @@ class BalanceWidget : GlanceAppWidget() {
         val isDark = resolveIsDark(context)
 
         provideContent {
-            WidgetContent(balance = balance, periodLabel = periodLabel, isDark = isDark)
+            WidgetContent(balance = balance, periodLabel = periodLabel, isDark = isDark, context = context)
         }
     }
 
@@ -65,7 +66,7 @@ class BalanceWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun WidgetContent(balance: Double, periodLabel: String, isDark: Boolean) {
+    private fun WidgetContent(balance: Double, periodLabel: String, isDark: Boolean, context: Context) {
         // Same surface/text colors as MinimalistDarkSurface/MinimalistDarkTextPrimary/
         // MinimalistDarkTextSecondary vs. the light surface/text colors in ui/theme/Color.kt -
         // reusing the exact hex values already verified working in the app, not new ones.
@@ -85,7 +86,7 @@ class BalanceWidget : GlanceAppWidget() {
                 .fillMaxSize()
                 .background(bgColor)
                 .padding(12.dp)
-                .clickable(actionStartActivity<MainActivity>()),
+                .clickable(actionStartActivity(Intent(context, MainActivity::class.java))),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
         ) {
