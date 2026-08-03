@@ -118,6 +118,33 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             // Make sure the daily reminder alarm is (re)scheduled every time the app launches
             ReminderScheduler.scheduleDailyCheck(getApplication(), _reminderHour.value, _reminderMinute.value)
         }
+
+        // Automatic cloud backup: whenever the local data changes, wait a short quiet period
+        // and then push a fresh snapshot to Firestore if the user is signed in. This way the
+        // backup stays up to date even if the phone is lost or reset without pressing the
+        // "גיבוי לענן" button.
+        viewModelScope.launch {
+            combine(
+                repository.allCategories,
+                repository.allTransactions,
+                repository.allRecurringRules
+            ) { cats, txs, rules -> Triple(cats, txs, rules) }
+                .debounce(30_000)
+                .collect {
+                    autoBackupIfSignedIn()
+                }
+        }
+    }
+
+    // Silent cloud backup used by the automatic watcher. Never touches _syncState so it
+    // doesn't disturb the UI - errors are simply retried on the next data change.
+    private suspend fun autoBackupIfSignedIn() {
+        val user = _authUser.value ?: return
+        try {
+            cloudSync.backup(user.uid)
+        } catch (e: Exception) {
+            // Offline / transient errors: silently skip, the next change retries.
+        }
     }
 
     private fun resetSelectionToCurrentPeriod() {
@@ -695,6 +722,8 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                 .onSuccess { user ->
                     _authUser.value = user
                     _syncState.value = SyncUiState.Success("מחובר: ${'$'}{user.displayName ?: user.email}")
+                    // Push a first backup right after signing in
+                    viewModelScope.launch { autoBackupIfSignedIn() }
                 }
                 .onFailure { e ->
                     if (e is GetCredentialCancellationException) {
