@@ -40,6 +40,7 @@ import com.example.data.CategoryEntity
 import com.example.data.TransactionEntity
 import com.example.data.RecurringRuleEntity
 import com.example.data.ParsedTransaction
+import com.example.ui.theme.ThemeMode
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +61,7 @@ fun BudgetScreen(
         val gregorianCycleStartDay by viewModel.gregorianCycleStartDay.collectAsStateWithLifecycle()
         val recurringRules by viewModel.recurringRules.collectAsStateWithLifecycle()
         val spendingForecast by viewModel.spendingForecast.collectAsStateWithLifecycle()
+        val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
 
         val selectedMonthIndex by viewModel.selectedHebrewMonthIndex.collectAsStateWithLifecycle()
         val selectedMonthName by viewModel.selectedHebrewMonthName.collectAsStateWithLifecycle()
@@ -80,6 +82,7 @@ fun BudgetScreen(
         var showMonthlyBudgetDialog by remember { mutableStateOf(false) }
         var showSettingsMenu by remember { mutableStateOf(false) }
         var showCalendarModeDialog by remember { mutableStateOf(false) }
+        var showThemeModeDialog by remember { mutableStateOf(false) }
         var showRecurringManagerDialog by remember { mutableStateOf(false) }
 
         Scaffold(
@@ -128,6 +131,14 @@ fun BudgetScreen(
                                         onClick = {
                                             showSettingsMenu = false
                                             showCalendarModeDialog = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("מצב כהה / בהיר") },
+                                        leadingIcon = { Icon(Icons.Default.DarkMode, contentDescription = null) },
+                                        onClick = {
+                                            showSettingsMenu = false
+                                            showThemeModeDialog = true
                                         }
                                     )
                                     DropdownMenuItem(
@@ -548,6 +559,18 @@ fun BudgetScreen(
                     viewModel.setCalendarMode(mode)
                     viewModel.setGregorianCycleStartDay(startDay)
                     showCalendarModeDialog = false
+                }
+            )
+        }
+
+        // I. Theme Mode Dialog (light / dark / follow system)
+        if (showThemeModeDialog) {
+            ThemeModeDialog(
+                currentMode = themeMode,
+                onDismiss = { showThemeModeDialog = false },
+                onSave = { mode ->
+                    viewModel.setThemeMode(mode)
+                    showThemeModeDialog = false
                 }
             )
         }
@@ -2531,6 +2554,103 @@ fun CalendarModeDialog(
                                 }
                             }
                         },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
+                    ) {
+                        Text("שמור", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ThemeModeDialog(
+    currentMode: ThemeMode,
+    onDismiss: () -> Unit,
+    onSave: (ThemeMode) -> Unit
+) {
+    var selectedMode by remember { mutableStateOf(currentMode) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "מצב כהה / בהיר",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF001D36)
+                )
+                Text(
+                    text = "בחר כיצד האפליקציה תוצג: תמיד בהיר, תמיד כהה, או בהתאמה להגדרות המערכת של הטלפון.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF44474E)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFEEF0F8), RoundedCornerShape(50))
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                            .background(if (selectedMode == ThemeMode.LIGHT) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .clickable { selectedMode = ThemeMode.LIGHT },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("בהיר", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                            .background(if (selectedMode == ThemeMode.DARK) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .clickable { selectedMode = ThemeMode.DARK },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("כהה", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                            .background(if (selectedMode == ThemeMode.SYSTEM) Color.White else Color.Transparent, RoundedCornerShape(50))
+                            .clickable { selectedMode = ThemeMode.SYSTEM },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("מערכת", fontWeight = FontWeight.Bold, color = Color(0xFF001D36), fontSize = 13.sp)
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF44474E))
+                    ) {
+                        Text("ביטול", fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = { onSave(selectedMode) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006494))
                     ) {
                         Text("שמור", color = Color.White, fontWeight = FontWeight.Bold)
