@@ -10,6 +10,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
 import com.example.data.*
+import com.example.reminders.ReminderReceiver
+import com.example.reminders.ReminderScheduler
 import com.example.ui.theme.ThemeMode
 import com.example.widget.BalanceWidget
 import kotlinx.coroutines.flow.*
@@ -48,8 +50,20 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     private val _gregorianCycleStartDay = MutableStateFlow(appPrefs.getInt(KEY_GREGORIAN_START_DAY, 1))
     val gregorianCycleStartDay = _gregorianCycleStartDay.asStateFlow()
 
+    // Time of day the recurring-rule "2 days before" reminder notification fires
+    private val _reminderHour = MutableStateFlow(appPrefs.getInt(ReminderReceiver.KEY_REMINDER_HOUR, ReminderReceiver.DEFAULT_HOUR))
+    val reminderHour = _reminderHour.asStateFlow()
+
+    private val _reminderMinute = MutableStateFlow(appPrefs.getInt(ReminderReceiver.KEY_REMINDER_MINUTE, ReminderReceiver.DEFAULT_MINUTE))
+    val reminderMinute = _reminderMinute.asStateFlow()
+
     // Recurring monthly income/expense rules
     val recurringRules: StateFlow<List<RecurringRuleEntity>> = repository.allRecurringRules
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Recurring rules whose "2 days before" reminder is due today, for the in-app banner
+    val upcomingReminders: StateFlow<List<RecurringRuleEntity>> = recurringRules
+        .map { rules -> ReminderHelper.rulesDueToday(rules) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Exposed lists
@@ -92,6 +106,9 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
 
             // Auto-generate any due recurring income/expense transactions
             checkAndGenerateRecurringTransactions()
+
+            // Make sure the daily reminder alarm is (re)scheduled every time the app launches
+            ReminderScheduler.scheduleDailyCheck(getApplication(), _reminderHour.value, _reminderMinute.value)
         }
     }
 
@@ -444,10 +461,30 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // Turn the "2 days before" reminder on/off for one specific recurring rule
+    fun setRecurringRuleReminderEnabled(rule: RecurringRuleEntity, reminderEnabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateRecurringRule(rule.copy(reminderEnabled = reminderEnabled))
+        }
+    }
+
     fun deleteRecurringRule(rule: RecurringRuleEntity) {
         viewModelScope.launch {
             repository.deleteRecurringRule(rule)
         }
+    }
+
+    // Change what time of day the recurring-rule reminder notification fires
+    fun setReminderTime(hour: Int, minute: Int) {
+        val safeHour = hour.coerceIn(0, 23)
+        val safeMinute = minute.coerceIn(0, 59)
+        _reminderHour.value = safeHour
+        _reminderMinute.value = safeMinute
+        appPrefs.edit()
+            .putInt(ReminderReceiver.KEY_REMINDER_HOUR, safeHour)
+            .putInt(ReminderReceiver.KEY_REMINDER_MINUTE, safeMinute)
+            .apply()
+        ReminderScheduler.scheduleDailyCheck(getApplication(), safeHour, safeMinute)
     }
 
     // Insert transaction

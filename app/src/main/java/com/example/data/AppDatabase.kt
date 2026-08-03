@@ -47,7 +47,8 @@ data class RecurringRuleEntity(
     val paymentType: String, // "CASH" or "CREDIT"
     val dayOfMonth: Int, // Gregorian day of month (1-28) on which the transaction is generated
     val isActive: Boolean = true,
-    val lastGeneratedPeriodKey: String? = null // "yyyy-MM" of the last calendar month this rule generated a transaction for
+    val lastGeneratedPeriodKey: String? = null, // "yyyy-MM" of the last calendar month this rule generated a transaction for
+    val reminderEnabled: Boolean = true // whether a reminder (notification + in-app banner) fires 2 days before this rule posts
 )
 
 // --- DAOs (Data Access Objects) ---
@@ -131,7 +132,13 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
-@Database(entities = [CategoryEntity::class, TransactionEntity::class, RecurringRuleEntity::class], version = 4, exportSchema = false)
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE recurring_rules ADD COLUMN reminderEnabled INTEGER NOT NULL DEFAULT 1")
+    }
+}
+
+@Database(entities = [CategoryEntity::class, TransactionEntity::class, RecurringRuleEntity::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun transactionDao(): TransactionDao
@@ -148,7 +155,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "hebrew_budget_db"
                 )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

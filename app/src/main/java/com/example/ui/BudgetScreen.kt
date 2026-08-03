@@ -103,6 +103,9 @@ fun BudgetScreen(
         val calendarMode by viewModel.calendarMode.collectAsStateWithLifecycle()
         val gregorianCycleStartDay by viewModel.gregorianCycleStartDay.collectAsStateWithLifecycle()
         val recurringRules by viewModel.recurringRules.collectAsStateWithLifecycle()
+        val upcomingReminders by viewModel.upcomingReminders.collectAsStateWithLifecycle()
+        val reminderHour by viewModel.reminderHour.collectAsStateWithLifecycle()
+        val reminderMinute by viewModel.reminderMinute.collectAsStateWithLifecycle()
         val spendingForecast by viewModel.spendingForecast.collectAsStateWithLifecycle()
         val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
 
@@ -127,6 +130,7 @@ fun BudgetScreen(
         var showCalendarModeDialog by remember { mutableStateOf(false) }
         var showThemeModeDialog by remember { mutableStateOf(false) }
         var showRecurringManagerDialog by remember { mutableStateOf(false) }
+        var showReminderTimeDialog by remember { mutableStateOf(false) }
 
         Scaffold(
             topBar = {
@@ -190,6 +194,14 @@ fun BudgetScreen(
                                         onClick = {
                                             showSettingsMenu = false
                                             showRecurringManagerDialog = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("שעת תזכורות") },
+                                        leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) },
+                                        onClick = {
+                                            showSettingsMenu = false
+                                            showReminderTimeDialog = true
                                         }
                                     )
                                 }
@@ -323,6 +335,13 @@ fun BudgetScreen(
                                 )
                             }
                         }
+                    }
+                }
+
+                // 1.5 Recurring-rule reminder banner (only shown when something is due today)
+                if (upcomingReminders.isNotEmpty()) {
+                    item {
+                        ReminderBannerCard(dueRules = upcomingReminders)
                     }
                 }
 
@@ -628,13 +647,65 @@ fun BudgetScreen(
                     viewModel.addRecurringRule(rTitle, rAmount, rIsExpense, rCategory, rPayment, rDay)
                 },
                 onToggleActive = { rule, active -> viewModel.setRecurringRuleActive(rule, active) },
+                onToggleReminder = { rule, enabled -> viewModel.setRecurringRuleReminderEnabled(rule, enabled) },
                 onDelete = { rule -> viewModel.deleteRecurringRule(rule) }
+            )
+        }
+
+        // J. Reminder Time Dialog (what time of day the "2 days before" notification fires)
+        if (showReminderTimeDialog) {
+            ReminderTimeDialog(
+                currentHour = reminderHour,
+                currentMinute = reminderMinute,
+                onDismiss = { showReminderTimeDialog = false },
+                onSave = { hour, minute ->
+                    viewModel.setReminderTime(hour, minute)
+                    showReminderTimeDialog = false
+                }
             )
         }
     }
 }
 
 // --- Sub-Composables ---
+
+@Composable
+fun ReminderBannerCard(
+    dueRules: List<RecurringRuleEntity>,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+        shape = RoundedCornerShape(20.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (dueRules.size == 1) "רשומה קבועה בעוד יומיים" else "${dueRules.size} רשומות קבועות בעוד יומיים",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    text = dueRules.joinToString(" • ") { "${it.title} (₪${String.format("%.2f", it.amount)})" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun BudgetDashboardCard(
@@ -2705,12 +2776,126 @@ fun ThemeModeDialog(
 }
 
 @Composable
+private fun NumberStepper(
+    value: Int,
+    range: IntRange,
+    step: Int = 1,
+    onValueChange: (Int) -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        IconButton(onClick = {
+            val next = value + step
+            onValueChange(if (next > range.last) range.first else next)
+        }) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowUp,
+                contentDescription = "הגדל",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+        Text(
+            text = String.format("%02d", value),
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.padding(vertical = 2.dp)
+        )
+        IconButton(onClick = {
+            val prev = value - step
+            onValueChange(if (prev < range.first) range.last else prev)
+        }) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "הקטן",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun ReminderTimeDialog(
+    currentHour: Int,
+    currentMinute: Int,
+    onDismiss: () -> Unit,
+    onSave: (hour: Int, minute: Int) -> Unit
+) {
+    var hour by remember { mutableStateOf(currentHour) }
+    var minute by remember { mutableStateOf(currentMinute) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "שעת תזכורות",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "באיזו שעה תרצה לקבל התראה על רשומה קבועה שעומדת להירשם בעוד יומיים.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    NumberStepper(value = hour, range = 0..23, onValueChange = { hour = it })
+                    Text(
+                        text = ":",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+                    NumberStepper(value = minute, range = 0..59, step = 5, onValueChange = { minute = it })
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ) {
+                        Text("ביטול", fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = { onSave(hour, minute) },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("שמור", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun RecurringRuleManagerDialog(
     rules: List<RecurringRuleEntity>,
     categories: List<CategoryEntity>,
     onDismiss: () -> Unit,
     onAdd: (title: String, amount: Double, isExpense: Boolean, categoryName: String, paymentType: String, dayOfMonth: Int) -> Unit,
     onToggleActive: (RecurringRuleEntity, Boolean) -> Unit,
+    onToggleReminder: (RecurringRuleEntity, Boolean) -> Unit,
     onDelete: (RecurringRuleEntity) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
@@ -2776,6 +2961,13 @@ fun RecurringRuleManagerDialog(
                                         text = "${rule.categoryName} • ₪${rule.amount} • כל ${rule.dayOfMonth} בחודש",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                IconButton(onClick = { onToggleReminder(rule, !rule.reminderEnabled) }) {
+                                    Icon(
+                                        imageVector = if (rule.reminderEnabled) Icons.Default.NotificationsActive else Icons.Default.NotificationsOff,
+                                        contentDescription = if (rule.reminderEnabled) "תזכורת פעילה - הקש לכיבוי" else "תזכורת כבויה - הקש להפעלה",
+                                        tint = if (rule.reminderEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                                 Switch(
