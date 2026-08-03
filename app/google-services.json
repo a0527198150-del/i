@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1008115688519",
+    "project_id": "hebrewbudgetsync",
+    "storage_bucket": "hebrewbudgetsync.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1008115688519:android:96a067daf38b687c82fd62",
+        "android_client_info": {
+          "package_name": "com.aistudio.kosherbudget.zrwpxm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFTEzI-UHMzt3d4rhzngSzK60VAM8ePaY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
