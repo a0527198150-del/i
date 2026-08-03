@@ -1,19 +1,23 @@
 package com.example.ui
 
+import android.app.Activity
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
+import com.example.auth.GoogleAuthManager
 import com.example.data.*
 import com.example.reminders.ReminderReceiver
 import com.example.reminders.ReminderScheduler
 import com.example.ui.theme.ThemeMode
 import com.example.widget.BalanceWidget
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -22,6 +26,10 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
 
     private val database = AppDatabase.getDatabase(application)
     private val repository = BudgetRepository(database)
+
+    // Google account sign-in + cloud backup/sync
+    private val authManager = GoogleAuthManager(application)
+    private val cloudSync = CloudSyncManager(application)
 
     // Preferences store for app-wide settings that aren't per-category (e.g. overall monthly budget cap)
     private val appPrefs = application.getSharedPreferences("hebrew_budget_prefs", Context.MODE_PRIVATE)
@@ -668,6 +676,86 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         _parseError.value = null
     }
 
+    // --- Google Sign-In & Cloud Sync ---
+
+    private val _authUser = MutableStateFlow<FirebaseUser?>(authManager.currentUser)
+    val authUser = _authUser.asStateFlow()
+
+    private val _isSigningIn = MutableStateFlow(false)
+    val isSigningIn = _isSigningIn.asStateFlow()
+
+    private val _syncState = MutableStateFlow<SyncUiState>(SyncUiState.Idle)
+    val syncState = _syncState.asStateFlow()
+
+    fun signInWithGoogle(activity: Activity) {
+        viewModelScope.launch {
+            _isSigningIn.value = true
+            _syncState.value = SyncUiState.Idle
+            authManager.signIn(activity)
+                .onSuccess { user ->
+                    _authUser.value = user
+                    _syncState.value = SyncUiState.Success("מחובר: ${'$'}{user.displayName ?: user.email}")
+                }
+                .onFailure { e ->
+                    if (e is GetCredentialCancellationException) {
+                        _syncState.value = SyncUiState.Idle
+                    } else {
+                        _syncState.value = SyncUiState.Error("ההתחברות נכשלה: ${'$'}{e.message ?: "שגיאה לא ידועה"}")
+                    }
+                }
+            _isSigningIn.value = false
+        }
+    }
+
+    fun signOut() {
+        authManager.signOut()
+        _authUser.value = null
+        _syncState.value = SyncUiState.Idle
+    }
+
+    fun backupToCloud() {
+        val user = _authUser.value
+        if (user == null) {
+            _syncState.value = SyncUiState.Error("אנא התחבר קודם כדי לגבות")
+            return
+        }
+        viewModelScope.launch {
+            _syncState.value = SyncUiState.InProgress
+            try {
+                val summary = cloudSync.backup(user.uid)
+                _syncState.value = SyncUiState.Success(
+                    "הגיבוי הושלם: ${'$'}{summary.transactions} עסקאות, ${'$'}{summary.categories} קטגוריות"
+                )
+            } catch (e: Exception) {
+                _syncState.value = SyncUiState.Error("הגיבוי נכשל: ${'$'}{e.message ?: "שגיאה לא ידועה"}")
+            }
+        }
+    }
+
+    fun restoreFromCloud() {
+        val user = _authUser.value
+        if (user == null) {
+            _syncState.value = SyncUiState.Error("אנא התחבר קודם כדי לשחזר")
+            return
+        }
+        viewModelScope.launch {
+            _syncState.value = SyncUiState.InProgress
+            try {
+                val summary = cloudSync.restore(user.uid)
+                if (summary == null) {
+                    _syncState.value = SyncUiState.Error("לא נמצא גיבוי בענן")
+                } else {
+                    _syncState.value = SyncUiState.Success(
+                        "השחזור הושלם: ${'$'}{summary.transactions} עסקאות, ${'$'}{summary.categories} קטגוריות"
+                    )
+                    BalanceWidget.refreshAll(getApplication())
+                }
+            } catch (e: Exception) {
+                _syncState.value = SyncUiState.Error("השחזור נכשל: ${'$'}{e.message ?: "שגיאה לא ידועה"}")
+            }
+        }
+    }
+
     companion object {
         private const val KEY_MONTHLY_BUDGET_LIMIT = "monthly_budget_limit"
         private const val KEY_CALENDAR_MODE = "calendar_mode"
@@ -712,3 +800,11 @@ data class SpendingForecast(
     val projectedIncome: Double = 0.0,
     val projectedBalance: Double = 0.0
 )
+
+// Cloud-sync UI state
+sealed class SyncUiState {
+    object Idle : SyncUiState()
+    object InProgress : SyncUiState()
+    data class Success(val message: String) : SyncUiState()
+    data class Error(val message: String) : SyncUiState()
+}

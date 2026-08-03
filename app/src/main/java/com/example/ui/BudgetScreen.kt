@@ -42,6 +42,11 @@ import com.example.data.TransactionEntity
 import com.example.data.RecurringRuleEntity
 import com.example.data.ParsedTransaction
 import com.example.ui.theme.ThemeMode
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.auth.FirebaseUser
 import java.text.DecimalFormat
 
 // Semantic money colors that stay readable in both light and dark themes
@@ -108,6 +113,9 @@ fun BudgetScreen(
         val reminderMinute by viewModel.reminderMinute.collectAsStateWithLifecycle()
         val spendingForecast by viewModel.spendingForecast.collectAsStateWithLifecycle()
         val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+        val authUser by viewModel.authUser.collectAsStateWithLifecycle()
+        val isSigningIn by viewModel.isSigningIn.collectAsStateWithLifecycle()
+        val syncState by viewModel.syncState.collectAsStateWithLifecycle()
 
         val selectedMonthIndex by viewModel.selectedHebrewMonthIndex.collectAsStateWithLifecycle()
         val selectedMonthName by viewModel.selectedHebrewMonthName.collectAsStateWithLifecycle()
@@ -131,6 +139,7 @@ fun BudgetScreen(
         var showThemeModeDialog by remember { mutableStateOf(false) }
         var showRecurringManagerDialog by remember { mutableStateOf(false) }
         var showReminderTimeDialog by remember { mutableStateOf(false) }
+        var showSyncDialog by remember { mutableStateOf(false) }
 
         Scaffold(
             topBar = {
@@ -202,6 +211,14 @@ fun BudgetScreen(
                                         onClick = {
                                             showSettingsMenu = false
                                             showReminderTimeDialog = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("גיבוי וסנכרון עם Google") },
+                                        leadingIcon = { Icon(Icons.Default.CloudUpload, contentDescription = null) },
+                                        onClick = {
+                                            showSettingsMenu = false
+                                            showSyncDialog = true
                                         }
                                     )
                                 }
@@ -662,6 +679,23 @@ fun BudgetScreen(
                     viewModel.setReminderTime(hour, minute)
                     showReminderTimeDialog = false
                 }
+            )
+        }
+
+        // K. Google Backup & Sync Dialog (sign-in + cloud backup/restore)
+        if (showSyncDialog) {
+            BackupSyncDialog(
+                authUser = authUser,
+                isSigningIn = isSigningIn,
+                syncState = syncState,
+                onDismiss = { showSyncDialog = false },
+                onSignIn = {
+                    val activity = LocalContext.current.findActivity()
+                    if (activity != null) viewModel.signInWithGoogle(activity)
+                },
+                onSignOut = { viewModel.signOut() },
+                onBackup = { viewModel.backupToCloud() },
+                onRestore = { viewModel.restoreFromCloud() }
             )
         }
     }
@@ -3721,3 +3755,156 @@ data class MonthSummary(
     val income: Double,
     val expense: Double
 )
+
+
+// Google Sign-In & Cloud Backup/Restore Dialog
+@Composable
+fun BackupSyncDialog(
+    authUser: FirebaseUser?,
+    isSigningIn: Boolean,
+    syncState: SyncUiState,
+    onDismiss: () -> Unit,
+    onSignIn: () -> Unit,
+    onSignOut: () -> Unit,
+    onBackup: () -> Unit,
+    onRestore: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "גיבוי וסנכרון עם Google",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "התחבר עם חשבון Google כדי לגבות את הנתונים לענן. אם הטלפון יתאפס, תוכל לשחזר את כל הנתונים במכשיר החדש.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (authUser == null) {
+                    Button(
+                        onClick = onSignIn,
+                        enabled = !isSigningIn,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        if (isSigningIn) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("מתחבר...", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                        } else {
+                            Icon(
+                                Icons.Default.AccountCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("התחבר עם Google", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "מחובר: ${'$'}{authUser.displayName ?: authUser.email ?: ""}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = onBackup,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Icon(Icons.Default.CloudUpload, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("גיבוי לענן", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                        }
+                        Button(
+                            onClick = onRestore,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                        ) {
+                            Icon(Icons.Default.CloudDownload, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("שחזור מהענן", color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    TextButton(
+                        onClick = onSignOut,
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("התנתק מהחשבון", fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                when (val state = syncState) {
+                    is SyncUiState.InProgress -> Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("מתבצע...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    is SyncUiState.Success -> Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    is SyncUiState.Error -> Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    SyncUiState.Idle -> {}
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ) {
+                        Text("סגור", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Finds the host Activity from a Compose Context (handles ContextWrapper chains)
+tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
