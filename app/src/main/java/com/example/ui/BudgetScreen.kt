@@ -47,44 +47,44 @@ import java.text.DecimalFormat
 // Semantic money colors that stay readable in both light and dark themes
 @Composable
 private fun moneyIncomeColor(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFF81C784) else Color(0xFF2E7D32)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF81C784) else Color(0xFF2E7D32)
 
 @Composable
 private fun moneyExpenseColor(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFEF9A9A) else Color(0xFFBA1A1A)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFEF9A9A) else Color(0xFFBA1A1A)
 
 @Composable
 private fun moneyWarningColor(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFE2B93B) else Color(0xFF6B4E00)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFE2B93B) else Color(0xFF6B4E00)
 
 // Chart colors that stay vivid and readable in both light and dark themes
 @Composable
 private fun chartTeal(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFF4DB6AC) else Color(0xFF00A699)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF4DB6AC) else Color(0xFF00A699)
 
 @Composable
 private fun chartAmber(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFFFD54F) else Color(0xFFF2A900)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFFFD54F) else Color(0xFFF2A900)
 
 @Composable
 private fun chartRed(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFEF9A9A) else Color(0xFFD32F2F)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFEF9A9A) else Color(0xFFD32F2F)
 
 @Composable
 private fun chartPurple(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFCE93D8) else Color(0xFF8E24AA)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFCE93D8) else Color(0xFF8E24AA)
 
 @Composable
 private fun chartOrange(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFFFFB74D) else Color(0xFFE65100)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFFFB74D) else Color(0xFFE65100)
 
 @Composable
 private fun chartSky(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFF4FC3F7) else Color(0xFF0288D1)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF4FC3F7) else Color(0xFF0288D1)
 
 @Composable
 private fun chartIndigo(): Color =
-    if (MaterialTheme.colorScheme.background.luminance < 0.5f) Color(0xFF7986CB) else Color(0xFF3949AB)
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF7986CB) else Color(0xFF3949AB)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
