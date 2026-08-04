@@ -684,13 +684,13 @@ fun BudgetScreen(
 
         // K. Google Backup & Sync Dialog (sign-in + cloud backup/restore)
         if (showSyncDialog) {
+            val activity = LocalContext.current.findActivity()
             BackupSyncDialog(
                 authUser = authUser,
                 isSigningIn = isSigningIn,
                 syncState = syncState,
                 onDismiss = { showSyncDialog = false },
                 onSignIn = {
-                    val activity = LocalContext.current.findActivity()
                     if (activity != null) viewModel.signInWithGoogle(activity)
                 },
                 onSignOut = { viewModel.signOut() },
@@ -3825,7 +3825,7 @@ fun BackupSyncDialog(
                     }
                 } else {
                     Text(
-                        text = "מחובר: ${'$'}{authUser.displayName ?: authUser.email ?: ""}",
+                        text = "מחובר: ${authUser.displayName ?: authUser.email ?: ""}",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary

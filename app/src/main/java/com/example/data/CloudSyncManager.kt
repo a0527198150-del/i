@@ -20,17 +20,18 @@ data class BackupSummary(
  * to the signed-in user's private Firestore area, and restores it from there.
  *
  * Layout under Firestore:
- *   users/{uid}/backup/categories/{id}       one doc per category
- *   users/{uid}/backup/transactions/{id}     one doc per transaction
- *   users/{uid}/backup/recurringRules/{id}   one doc per recurring rule
- *   users/{uid}/backup/meta                  { lastBackupAt, counts }
+ *   users/{uid}/categories/{id}              one doc per category
+ *   users/{uid}/transactions/{id}            one doc per transaction
+ *   users/{uid}/recurringRules/{id}          one doc per recurring rule
+ *   users/{uid}/meta/state                   { lastBackupAt, counts }
  */
 class CloudSyncManager(private val context: Context) {
 
     private val firestore = FirebaseFirestore.getInstance()
 
+    // DocumentReference of the signed-in user; entity collections hang off it.
     private fun backupRef(uid: String) =
-        firestore.collection("users").document(uid).collection("backup")
+        firestore.collection("users").document(uid)
 
     suspend fun backup(uid: String): BackupSummary = withContext(Dispatchers.IO) {
         val db = AppDatabase.getDatabase(context)
@@ -42,7 +43,7 @@ class CloudSyncManager(private val context: Context) {
         replaceCollection(backupRef(uid).collection("transactions"), transactions.map { it.id.toString() to it.toMap() })
         replaceCollection(backupRef(uid).collection("recurringRules"), rules.map { it.id.toString() to it.toMap() })
 
-        backupRef(uid).document("meta").set(
+        backupRef(uid).collection("meta").document("state").set(
             mapOf(
                 "lastBackupAt" to System.currentTimeMillis(),
                 "categories" to categories.size,

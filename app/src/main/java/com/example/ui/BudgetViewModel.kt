@@ -721,7 +721,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             authManager.signIn(activity)
                 .onSuccess { user ->
                     _authUser.value = user
-                    _syncState.value = SyncUiState.Success("מחובר: ${'$'}{user.displayName ?: user.email}")
+                    _syncState.value = SyncUiState.Success("מחובר: ${user.displayName ?: user.email}")
                     // Push a first backup right after signing in
                     viewModelScope.launch { autoBackupIfSignedIn() }
                 }
@@ -729,7 +729,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                     if (e is GetCredentialCancellationException) {
                         _syncState.value = SyncUiState.Idle
                     } else {
-                        _syncState.value = SyncUiState.Error("ההתחברות נכשלה: ${'$'}{e.message ?: "שגיאה לא ידועה"}")
+                        _syncState.value = SyncUiState.Error("ההתחברות נכשלה: ${e.message ?: "שגיאה לא ידועה"}")
                     }
                 }
             _isSigningIn.value = false
@@ -753,10 +753,10 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 val summary = cloudSync.backup(user.uid)
                 _syncState.value = SyncUiState.Success(
-                    "הגיבוי הושלם: ${'$'}{summary.transactions} עסקאות, ${'$'}{summary.categories} קטגוריות"
+                    "הגיבוי הושלם: ${summary.transactions} עסקאות, ${summary.categories} קטגוריות"
                 )
             } catch (e: Exception) {
-                _syncState.value = SyncUiState.Error("הגיבוי נכשל: ${'$'}{e.message ?: "שגיאה לא ידועה"}")
+                _syncState.value = SyncUiState.Error("הגיבוי נכשל: ${e.message ?: "שגיאה לא ידועה"}")
             }
         }
     }
@@ -775,12 +775,12 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                     _syncState.value = SyncUiState.Error("לא נמצא גיבוי בענן")
                 } else {
                     _syncState.value = SyncUiState.Success(
-                        "השחזור הושלם: ${'$'}{summary.transactions} עסקאות, ${'$'}{summary.categories} קטגוריות"
+                        "השחזור הושלם: ${summary.transactions} עסקאות, ${summary.categories} קטגוריות"
                     )
                     BalanceWidget.refreshAll(getApplication())
                 }
             } catch (e: Exception) {
-                _syncState.value = SyncUiState.Error("השחזור נכשל: ${'$'}{e.message ?: "שגיאה לא ידועה"}")
+                _syncState.value = SyncUiState.Error("השחזור נכשל: ${e.message ?: "שגיאה לא ידועה"}")
             }
         }
     }
