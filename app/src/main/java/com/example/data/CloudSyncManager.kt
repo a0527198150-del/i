@@ -58,12 +58,37 @@ class CloudSyncManager(private val context: Context) {
     suspend fun restore(uid: String): BackupSummary? = withContext(Dispatchers.IO) {
         val db = AppDatabase.getDatabase(context)
 
+        // A backup is trustworthy only if its commit marker (meta/state) exists:
+        // it is written strictly after all three collections were uploaded, so a
+        // missing marker means the backup was interrupted mid-write and must not
+        // be used to overwrite the local data.
+        val metaRef = backupRef(uid).collection("meta").document("state")
+        val metaSnap = metaRef.get().await()
+        if (!metaSnap.exists()) {
+            return@withContext null
+        }
+
+        val expectedCategories = metaSnap.getLong("categories")
+        val expectedTransactions = metaSnap.getLong("transactions")
+        val expectedRecurringRules = metaSnap.getLong("recurringRules")
+
         val categories = readCollection(backupRef(uid).collection("categories")) { it.toCategory() }
         val transactions = readCollection(backupRef(uid).collection("transactions")) { it.toTransaction() }
         val rules = readCollection(backupRef(uid).collection("recurringRules")) { it.toRecurringRule() }
 
-        if (categories.isEmpty() && transactions.isEmpty() && rules.isEmpty()) {
-            return@withContext null
+        // Verify the backup is complete BEFORE touching local data: the actual
+        // document counts must match the counts recorded in the commit marker.
+        val isComplete = expectedCategories != null &&
+            expectedTransactions != null &&
+            expectedRecurringRules != null &&
+            categories.size == expectedCategories.toInt() &&
+            transactions.size == expectedTransactions.toInt() &&
+            rules.size == expectedRecurringRules.toInt()
+
+        if (!isComplete) {
+            throw IllegalStateException(
+                "הגיבוי בענן לא שלם (כנראה נקטע באמצע). הנתונים המקומיים לא נפגעו."
+            )
         }
 
         db.clearAllTables()
@@ -74,20 +99,27 @@ class CloudSyncManager(private val context: Context) {
         BackupSummary(categories.size, transactions.size, rules.size)
     }
 
-    // Replaces the contents of a collection: deletes old docs then writes new ones, in batches
+    // Replaces the contents of a collection. Writes all new docs first (upsert) and
+    // only then deletes docs that no longer exist locally, in batches. If the backup
+    // is interrupted mid-way, the cloud keeps old+new docs (a superset) instead of
+    // being left empty or partial. The meta/state doc, written last, is the commit
+    // marker that tells restore() whether the backup is complete.
     private suspend fun replaceCollection(
         ref: com.google.firebase.firestore.CollectionReference,
         docs: List<Pair<String, Map<String, Any>>>
     ) {
-        val existing = ref.get().await()
-        existing.documents.chunked(400).forEach { chunk ->
-            val batch = firestore.batch()
-            chunk.forEach { batch.delete(it.reference) }
-            batch.commit().await()
-        }
         docs.chunked(400).forEach { chunk ->
             val batch = firestore.batch()
             chunk.forEach { (id, data) -> batch.set(ref.document(id), data) }
+            batch.commit().await()
+        }
+
+        // Second pass: delete only the docs that no longer exist in the local DB
+        val newIds = docs.mapTo(mutableSetOf()) { it.first }
+        val existing = ref.get().await()
+        existing.documents.filter { it.id !in newIds }.chunked(400).forEach { chunk ->
+            val batch = firestore.batch()
+            chunk.forEach { batch.delete(it.reference) }
             batch.commit().await()
         }
     }
