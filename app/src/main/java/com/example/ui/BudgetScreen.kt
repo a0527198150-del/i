@@ -140,6 +140,7 @@ fun BudgetScreen(
         var showRecurringManagerDialog by remember { mutableStateOf(false) }
         var showReminderTimeDialog by remember { mutableStateOf(false) }
         var showSyncDialog by remember { mutableStateOf(false) }
+        var showRestoreConfirm by remember { mutableStateOf(false) }
 
         Scaffold(
             topBar = {
@@ -695,7 +696,38 @@ fun BudgetScreen(
                 },
                 onSignOut = { viewModel.signOut() },
                 onBackup = { viewModel.backupToCloud() },
-                onRestore = { viewModel.restoreFromCloud() }
+                // Restoring replaces all local data, so ask for confirmation first
+                onRestore = { showRestoreConfirm = true }
+            )
+        }
+
+        // K2. Restore confirmation dialog - restore wipes local data, so the user
+        // must explicitly confirm before the ViewModel is invoked
+        if (showRestoreConfirm) {
+            AlertDialog(
+                onDismissRequest = { showRestoreConfirm = false },
+                title = { Text("שחזור מהענן?") },
+                text = {
+                    Text(
+                        "כל הנתונים המקומיים הנוכחיים (קטגוריות, עסקאות ורשומות קבועות) יוחלפו " +
+                            "בנתוני הגיבוי שבענן. פעולה זו אינה ניתנת לביטול."
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showRestoreConfirm = false
+                            viewModel.restoreFromCloud()
+                        }
+                    ) {
+                        Text("כן, שחזר", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRestoreConfirm = false }) {
+                        Text("ביטול")
+                    }
+                }
             )
         }
     }
