@@ -9,6 +9,17 @@ if (geminiEnvKey.isNotEmpty()) {
     rootProject.file(".env.example").copyTo(envFile, overwrite = true)
 }
 
+// Every commit gets a higher versionCode (count of commits on the branch), so
+// each new APK built by GitHub Actions can be installed OVER the previous one
+// without uninstalling - as long as it is signed with the same stable key
+// (debug.keystore restored from the DEBUG_KEYSTORE_BASE64 secret, see README).
+val releaseVersionCode: Int = runCatching {
+  ProcessBuilder("git", "rev-list", "--count", "HEAD")
+    .redirectErrorStream(true)
+    .start()
+    .let { it.inputStream.readBytes().toString(Charsets.UTF_8).trim().toInt() }
+}.getOrDefault(1).coerceAtLeast(1)
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -26,8 +37,8 @@ android {
     applicationId = "com.aistudio.kosherbudget.zrwpxm"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = releaseVersionCode
+    versionName = "1.0.$releaseVersionCode"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
