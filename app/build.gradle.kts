@@ -1,4 +1,19 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import org.gradle.api.provider.ValueSource
+import org.gradle.api.provider.ValueSourceParameters
+
+// Configuration-cache-safe way to derive the versionCode from the git history.
+// A ValueSource is the supported mechanism for running external processes at
+// configuration time under the configuration cache - a bare ProcessBuilder is
+// rejected by Gradle 9's configuration cache.
+abstract class GitCommitCountValueSource : ValueSource<Int, ValueSourceParameters.None> {
+  override fun obtain(): Int = runCatching {
+    ProcessBuilder("git", "rev-list", "--count", "HEAD")
+      .redirectErrorStream(true)
+      .start()
+      .let { it.inputStream.readBytes().toString(Charsets.UTF_8).trim().toInt() }
+  }.getOrDefault(1).coerceAtLeast(1)
+}
 
 // Automatically generate .env from environment variables if present
 val envFile = rootProject.file(".env")
@@ -13,12 +28,7 @@ if (geminiEnvKey.isNotEmpty()) {
 // each new APK built by GitHub Actions can be installed OVER the previous one
 // without uninstalling - as long as it is signed with the same stable key
 // (debug.keystore restored from the DEBUG_KEYSTORE_BASE64 secret, see README).
-val releaseVersionCode: Int = runCatching {
-  ProcessBuilder("git", "rev-list", "--count", "HEAD")
-    .redirectErrorStream(true)
-    .start()
-    .let { it.inputStream.readBytes().toString(Charsets.UTF_8).trim().toInt() }
-}.getOrDefault(1).coerceAtLeast(1)
+val releaseVersionCode: Int = providers.of(GitCommitCountValueSource::class.java).get()
 
 plugins {
   alias(libs.plugins.android.application)
