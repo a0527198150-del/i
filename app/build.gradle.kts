@@ -28,7 +28,7 @@ if (geminiEnvKey.isNotEmpty()) {
 // each new APK built by GitHub Actions can be installed OVER the previous one
 // without uninstalling - as long as it is signed with the same stable key
 // (debug.keystore restored from the DEBUG_KEYSTORE_BASE64 secret, see README).
-val releaseVersionCode: Int = providers.of(GitCommitCountValueSource::class.java).get()
+val releaseVersionCode: Int = providers.of(GitCommitCountValueSource::class.java) { }.get()
 
 plugins {
   alias(libs.plugins.android.application)
