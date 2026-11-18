@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv bash
+set -euo pipefail
+
+if [[ -z "${WEBTOP_ACCESS_EMAIL:-}" ]]; then
+  echo "[cloudflared] WEBTOP_ACCESS_EMAIL is missing. Refusing to publish an unauthenticated desktop." >&2
+  exit 1
+fi
+
+echo "[cloudflared] Starting a protected Cloudflare Quick Tunnel (email verification required)."
+echo "[cloudflared] The HTTPS desktop URL appears below when connected."
+exec /usr/local/bin/cloudflared tunnel --no-autoupdate --protocol http2 \
+  --url http://127.0.0.1:3000 \
+  --allowed-mail "${WEBTOP_ACCESS_EMAIL}"
