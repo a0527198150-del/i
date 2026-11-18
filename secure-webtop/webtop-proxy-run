@@ -1,0 +1,16 @@
+#!/usr/bin/with-contenv bash
+set -euo pipefail
+
+if [[ -z "${CUSTOM_USER:-}" || -z "${PASSWORD:-}" ]]; then
+  echo "[webtop-proxy] Refusing to start without CUSTOM_USER and PASSWORD." >&2
+  exit 1
+fi
+
+# Generate a bcrypt verifier from runtime secrets. Never store credentials in Git.
+umask 077
+printf '%s\n' "$PASSWORD" | htpasswd -i -B -C 12 -c /run/webtop-proxy.htpasswd "$CUSTOM_USER" >/dev/null
+chmod 644 /run/webtop-proxy.htpasswd
+
+echo "[webtop-proxy] Protected HTTPS ingress ready on container port 8080 (TLS provided by Railway)."
+nginx -t -c /etc/nginx/webtop-proxy.conf
+exec nginx -c /etc/nginx/webtop-proxy.conf -g 'daemon off;'
